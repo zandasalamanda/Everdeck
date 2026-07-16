@@ -61,10 +61,12 @@ async function meter(db: Db, job: Job, provider: string, res?: { inputTokens: nu
 async function prospectsPerHunt(db: Db, accountId: string): Promise<number> {
   const { data } = await db
     .from("subscriptions")
-    .select("plan, plans(ideas_per_run)")
+    .select("plan, plans(prospects_per_hunt)")
     .eq("account_id", accountId)
     .single();
-  return (data as { plans?: { ideas_per_run?: number } } | null)?.plans?.ideas_per_run ?? 5;
+  // Discovery is cheap (no LLM), so it's generous — the metered resource is
+  // "pursues" (on-demand generation), gated separately in pursue_prospect().
+  return (data as { plans?: { prospects_per_hunt?: number } } | null)?.plans?.prospects_per_hunt ?? 20;
 }
 
 function tierOf(score: number): "high" | "med" | "low" {
@@ -72,7 +74,12 @@ function tierOf(score: number): "high" | "med" | "low" {
 }
 
 const GENERATE_SYSTEM =
-  "You are a senior web designer and cold-outreach copywriter. Given a local business, produce a personalized one-page website mockup as a single self-contained HTML document (inline CSS, no external assets, modern/clean/trustworthy, mobile-first, with a clear booking/quote CTA), a short summary of what you improved, and a warm, non-pushy 2-3 sentence outreach opener offering to send the free preview. Output strict JSON: {\"html\":string,\"summary\":string,\"opener\":string}.";
+  "You help a freelance web developer win a local business as a client. For the given business produce, in ONE response: " +
+  "(1) html — a personalized one-page website concept as a single self-contained HTML document (inline CSS, no external assets, modern/clean/trustworthy, mobile-first, with a clear booking/quote CTA) that shows what their new site could look like; " +
+  "(2) brief — a build brief in clean Markdown that a developer can paste straight into an AI coding tool (Claude Code, Cursor, v0, Bolt) to build the real site, with sections: '## Business', '## Target audience', '## Pages & sections', '## Key content & copy', '## Design direction', '## Suggested stack'; keep it concrete and specific to this business; " +
+  "(3) opener — a warm, non-pushy 2-3 sentence cold-outreach opener offering to send the free preview; " +
+  "(4) summary — one sentence on the biggest improvement. " +
+  "Output strict JSON: {\"html\":string,\"brief\":string,\"opener\":string,\"summary\":string}.";
 
 /** Stage 1 — discover businesses for a hunt; enqueue an audit per prospect. */
 export async function runDiscover(db: Db, job: Job): Promise<void> {
@@ -166,13 +173,9 @@ export async function runAudit(db: Db, job: Job): Promise<void> {
     .eq("id", pid);
   assertOk(error, "audit update");
 
-  const { error: enqErr } = await db.rpc("enqueue_job", {
-    p_account_id: job.account_id,
-    p_run_id: job.run_id,
-    p_stage: 3,
-    p_payload: { prospect_id: pid },
-  });
-  assertOk(enqErr, "audit enqueue generate");
+  // Decoupled pipeline: the hunt STOPS at audit. Generation (mockup + build
+  // brief + outreach) is on-demand — enqueued only when the user pursues a
+  // prospect (pursue_prospect RPC). This is what stops the token burn / 429s.
 }
 
 /** Stage 3 — generate the personalized mockup + outreach draft. */
@@ -199,22 +202,24 @@ export async function runGenerate(db: Db, job: Job): Promise<void> {
       type: "object",
       properties: {
         html: { type: "string" },
-        summary: { type: "string" },
+        brief: { type: "string" },
         opener: { type: "string" },
+        summary: { type: "string" },
       },
-      required: ["html", "summary", "opener"],
+      required: ["html", "brief", "opener", "summary"],
     },
     seed: p.name,
   });
   await meter(db, job, res.provider, res);
 
-  const gen = parseJson<{ html: string; summary: string; opener: string }>(res.text, "generate");
+  const gen = parseJson<{ html: string; brief: string; summary: string; opener: string }>(res.text, "generate");
   if (!gen.html || gen.html.length < 200) throw new PermanentStageError("generate: empty mockup");
 
   const { error: mErr } = await db.from("mockups").insert({
     account_id: job.account_id,
     prospect_id: pid,
     html: gen.html,
+    brief: gen.brief ?? null,
     summary: gen.summary ?? null,
   });
   assertOk(mErr, "mockup insert");
