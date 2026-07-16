@@ -22,8 +22,8 @@ export default async function UsagePage() {
       <header>
         <h1 className="text-xl font-medium tracking-tight text-cloud">Usage</h1>
         <p className="mt-1.5 text-sm leading-relaxed text-white/55">
-          Engine calls by provider — requests and token volume across every run
-          on this account.
+          Provider calls by source — business discovery, site audits, and mockup
+          generation across every hunt on this account.
         </p>
       </header>
 
@@ -31,13 +31,13 @@ export default async function UsagePage() {
         {usage.length === 0 ? (
           <div className="px-5 py-12 text-center">
             <p className="text-sm text-white/55">
-              No engine calls yet — start a run.
+              No provider calls yet — start a hunt.
             </p>
             <Link
-              href="/app/runs"
+              href="/app/hunts"
               className="mt-4 inline-flex rounded-full px-4 py-2 text-[13px] text-white/70 ring-1 ring-white/10 transition-colors hover:bg-white/[0.05] hover:text-white"
             >
-              Go to Runs
+              Go to Hunts
             </Link>
           </div>
         ) : (
@@ -90,14 +90,17 @@ export default async function UsagePage() {
         </h2>
         <ul className="mt-2 space-y-1.5 text-[13px] leading-relaxed text-white/55">
           <li>
-            <span className="text-cloud">mock</span> — costs $0 and makes zero
-            external calls; output is synthetic sample data.
+            <span className="text-cloud">places / audit :sample</span> — $0, zero
+            external calls; synthetic businesses and site scores. Add a Google
+            key to pull real businesses and PageSpeed scores.
           </li>
           <li>
-            <span className="text-cloud">gemini</span> — the free tier budgets
-            roughly 1,500 requests/day, and content sent on it may be used by
-            Google to improve its products. See the go-live section in
-            STATUS.md before enabling it for real accounts.
+            <span className="text-cloud">mock</span> — the mockup generator on
+            $0. Add a Gemini key to write real, personalized mockups + openers.
+          </li>
+          <li>
+            Screenshots come from thum.io (no key). See SETUP.md for the exact
+            keys and how to flip each provider to live.
           </li>
         </ul>
       </aside>

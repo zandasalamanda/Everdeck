@@ -8,9 +8,9 @@ import type { Plan } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 const PLAN_COPY: Record<string, { blurb: string; price: string }> = {
-  free: { blurb: "A taste of the deck.", price: "$0" },
-  pro: { blurb: "The engine, running daily for you.", price: "$49/mo" },
-  founder: { blurb: "Full volume, full autonomy.", price: "$199/mo" },
+  free: { blurb: "Try a hunt, land your first lead.", price: "$0" },
+  pro: { blurb: "Enough volume to fill a pipeline.", price: "$49/mo" },
+  founder: { blurb: "Agency volume, hunts on autopilot.", price: "$199/mo" },
 };
 
 export default async function BillingPage() {

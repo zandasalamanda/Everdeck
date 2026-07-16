@@ -1,0 +1,18 @@
+-- Applied to prod as `prospect_model` (+ `link_runs_to_hunts`). The web-dev
+-- lead-machine data model. Full DDL in the connector migration history.
+-- Tables (all RLS-scoped via private.app_uid / is_account_member):
+--   hunts      — a search: business_type + location + mode + status
+--   prospects  — a found business: name/address/phone/website_url/has_website,
+--                current_site_score, current_site_screenshot_url, contact_email,
+--                opportunity_score, tier, reason, status (new..won/lost), grounding,
+--                dedupe_key (unique per account)
+--   mockups    — generated one-page website HTML + summary, per prospect
+--   outreach   — the review dock: to_email/subject/body/status(draft|approved|sent)
+-- Gated/entry RPCs (SECURITY DEFINER, authenticated-only):
+--   start_hunt(business_type, location, mode)  — plan-gated (daily_runs); creates
+--                hunt + run (runs.hunt_id) + a stage-1 job
+--   set_prospect_status(prospect_id, status)
+--   save_outreach(prospect_id, to, subject, body, approve)  — upserts the dock draft
+--   mark_sent(prospect_id)                                   — user sends themselves
+--   v_todays_prospects view (security_invoker)
+-- Pipeline stages (worker): 1 discover, 2 audit, 3 generate mockup + outreach.

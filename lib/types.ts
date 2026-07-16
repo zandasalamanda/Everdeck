@@ -1,37 +1,46 @@
-// Domain types mirroring the Supabase schema (see supabase/migrations).
+// Domain types for the prospect model (web-dev lead machine).
 
 export type Tier = "high" | "med" | "low";
-export type Grounding = "synthetic" | "reddit";
+export type Grounding = "synthetic" | "live";
 export type RunMode = "autonomous" | "directed";
-export type RunStatus = "queued" | "running" | "done" | "error";
-export type NodeType = "core" | "category" | "subcategory" | "niche" | "subniche";
-export type Framework =
-  | "segmentation"
-  | "differentiation"
-  | "business_model"
-  | "distribution"
-  | "new_paradigm";
-
-export const FRAMEWORK_LABELS: Record<Framework, string> = {
-  segmentation: "Market segmentation",
-  differentiation: "Product differentiation",
-  business_model: "Business-model innovation",
-  distribution: "Distribution & marketing",
-  new_paradigm: "New paradigm",
-};
+export type ProspectStatus =
+  | "new"
+  | "audited"
+  | "ready"
+  | "in_dock"
+  | "sent"
+  | "replied"
+  | "won"
+  | "lost"
+  | "skipped";
 
 export const TIER_LABELS: Record<Tier, string> = {
-  high: "High opportunity",
-  med: "Medium opportunity",
-  low: "Low opportunity",
+  high: "Hot lead",
+  med: "Worth a look",
+  low: "Long shot",
 };
 
-/** Non-color cue shown alongside tier colors for accessibility. */
+/** Non-color cue alongside tier colors, for accessibility. */
 export const TIER_GLYPHS: Record<Tier, string> = {
   high: "▲",
   med: "◆",
   low: "○",
 };
+
+export const STATUS_LABELS: Record<ProspectStatus, string> = {
+  new: "New",
+  audited: "Audited",
+  ready: "Mockup ready",
+  in_dock: "In outreach dock",
+  sent: "Sent",
+  replied: "Replied",
+  won: "Won",
+  lost: "Lost",
+  skipped: "Skipped",
+};
+
+/** Ordered pipeline for the board. */
+export const PIPELINE: ProspectStatus[] = ["ready", "in_dock", "sent", "replied", "won"];
 
 export interface Account {
   id: string;
@@ -50,90 +59,68 @@ export interface Subscription {
 export interface Plan {
   plan: string;
   daily_runs: number;
-  ideas_per_run: number;
-  landing_prompts: boolean;
-  engine: boolean;
+  ideas_per_run: number; // prospects per hunt
+  landing_prompts: boolean; // can regenerate mockups
+  engine: boolean; // autonomous hunts
 }
 
-export interface Market {
+export interface Hunt {
   id: string;
   account_id: string;
-  name: string;
+  business_type: string;
+  location: string;
   mode: RunMode;
+  status: "queued" | "running" | "done" | "error";
   created_at: string;
 }
 
-export interface MarketNode {
+export interface Prospect {
   id: string;
-  market_id: string;
-  parent_id: string | null;
-  node_type: NodeType;
-  label: string;
-  depth: number;
-}
-
-export interface Idea {
-  id: string;
-  market_id: string;
-  node_id: string;
+  hunt_id: string;
   run_id: string | null;
-  framework: Framework;
+  place_id: string | null;
   name: string;
-  explanation: string;
-  features: string[];
-  value_prop: string | null;
-  business_model: string | null;
-  pain_addressed: string | null;
-  differentiator: string | null;
-  score: number;
+  address: string | null;
+  phone: string | null;
+  website_url: string | null;
+  has_website: boolean;
+  current_site_score: number | null;
+  current_site_screenshot_url: string | null;
+  contact_email: string | null;
+  opportunity_score: number;
   tier: Tier;
+  reason: string | null;
+  status: ProspectStatus;
   grounding: Grounding;
   created_at: string;
 }
 
-export interface PainPoint {
+export interface Mockup {
   id: string;
-  node_id: string;
-  heading: string;
-  summary: string;
-  frequency: string | null;
-  intensity: string | null;
-  priority_rank: number | null;
-  grounding: Grounding;
+  prospect_id: string;
+  html: string;
+  summary: string | null;
+  created_at: string;
 }
 
-export interface PainQuote {
+export interface Outreach {
   id: string;
-  pain_point_id: string;
-  quote: string;
-  source_url: string | null;
-}
-
-export interface Assessment {
-  id: string;
-  node_id: string;
-  idea_id: string;
-  rank: number;
-  rationale: string;
+  prospect_id: string;
+  to_email: string | null;
+  subject: string | null;
+  body: string | null;
+  status: "draft" | "approved" | "sent";
+  sent_at: string | null;
 }
 
 export interface Run {
   id: string;
   account_id: string;
-  market_id: string | null;
+  hunt_id: string | null;
   mode: RunMode;
-  status: RunStatus;
+  status: "queued" | "running" | "done" | "error";
   stage_progress: Record<string, string>;
   error: string | null;
-  created_at: string;
-  started_at: string | null;
-  finished_at: string | null;
-}
-
-export interface LandingPrompt {
-  id: string;
-  idea_id: string;
-  content: string;
   created_at: string;
 }
 

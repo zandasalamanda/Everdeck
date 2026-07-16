@@ -27,10 +27,10 @@ export default function PlanCard({
   const [error, setError] = useState<string | null>(null);
 
   const features = [
-    `${plan.daily_runs} run${plan.daily_runs === 1 ? "" : "s"} per day`,
-    `${plan.ideas_per_run} scored ideas per run`,
-    plan.engine ? "Daily autonomous engine" : "Directed runs only",
-    plan.landing_prompts ? "Landing-page prompt generator" : "No landing prompts",
+    `${plan.daily_runs} hunt${plan.daily_runs === 1 ? "" : "s"} per day`,
+    `Up to ${plan.ideas_per_run} prospects per hunt`,
+    "Mockup + outreach draft for each",
+    plan.engine ? "Autonomous daily hunts" : "Directed hunts only",
   ];
 
   async function change(action: "checkout" | "downgrade") {

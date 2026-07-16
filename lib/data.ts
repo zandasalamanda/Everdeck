@@ -7,14 +7,11 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Account,
-  Assessment,
-  Idea,
-  LandingPrompt,
-  Market,
-  MarketNode,
-  PainPoint,
-  PainQuote,
+  Hunt,
+  Mockup,
+  Outreach,
   Plan,
+  Prospect,
   Run,
   Subscription,
 } from "@/lib/types";
@@ -26,25 +23,18 @@ export interface Workspace {
   email: string;
 }
 
-/** The signed-in user's workspace (first account membership).
- *  Provisions the workspace on first visit and keeps email/name in sync. */
+/** The signed-in user's workspace; provisions it on first visit. */
 export async function getWorkspace(): Promise<Workspace | null> {
   const { userId } = await auth();
   if (!userId) return null;
 
   const supabase = createClient();
-
-  // Idempotent: creates profile+account+membership+subscription for a brand
-  // new Clerk user, otherwise a no-op. Identity is read from the verified
-  // JWT inside the RPC, never passed in.
   await supabase.rpc("ensure_workspace");
 
   const user = await currentUser();
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
   const name = user?.firstName ?? user?.username ?? "";
-  if (email || name) {
-    await supabase.rpc("sync_profile", { p_email: email, p_name: name });
-  }
+  if (email || name) await supabase.rpc("sync_profile", { p_email: email, p_name: name });
 
   const { data: account } = await supabase
     .from("accounts")
@@ -85,131 +75,106 @@ export async function getWorkspace(): Promise<Workspace | null> {
   };
 }
 
-/** Today's deck: freshest ideas, highest score first. */
-export async function getTodaysDeck(accountId: string): Promise<Idea[]> {
+export async function getTodaysProspects(accountId: string): Promise<Prospect[]> {
   const supabase = createClient();
   const { data } = await supabase
-    .from("v_todays_deck")
+    .from("v_todays_prospects")
     .select("*")
     .eq("account_id", accountId)
     .limit(60);
-  return (data ?? []) as Idea[];
+  return (data ?? []) as Prospect[];
 }
 
-/** Most recent ideas regardless of day (fallback when today is empty). */
-export async function getRecentIdeas(accountId: string, limit = 30): Promise<Idea[]> {
+export async function getRecentProspects(accountId: string, limit = 40): Promise<Prospect[]> {
   const supabase = createClient();
   const { data } = await supabase
-    .from("ideas")
+    .from("prospects")
     .select("*")
     .eq("account_id", accountId)
-    .order("score", { ascending: false })
+    .order("opportunity_score", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
-  return (data ?? []) as Idea[];
+  return (data ?? []) as Prospect[];
 }
 
-export interface MapData {
-  markets: Market[];
-  nodes: MarketNode[];
-  ideas: Idea[];
-}
-
-export async function getMapData(accountId: string): Promise<MapData> {
+export async function getBoardProspects(accountId: string): Promise<Prospect[]> {
   const supabase = createClient();
-  const [{ data: markets }, { data: nodes }, { data: ideas }] = await Promise.all([
-    supabase
-      .from("markets")
-      .select("*")
-      .eq("account_id", accountId)
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("market_nodes")
-      .select("id, market_id, parent_id, node_type, label, depth")
-      .eq("account_id", accountId)
-      .limit(2000),
-    supabase
-      .from("ideas")
-      .select("*")
-      .eq("account_id", accountId)
-      .order("score", { ascending: false })
-      .limit(500),
-  ]);
-  return {
-    markets: (markets ?? []) as Market[],
-    nodes: (nodes ?? []) as MarketNode[],
-    ideas: (ideas ?? []) as Idea[],
-  };
-}
-
-export interface IdeaDetail {
-  idea: Idea;
-  nodeLabel: string;
-  painPoints: (PainPoint & { pain_quotes: PainQuote[] })[];
-  siblings: Idea[];
-  assessments: (Assessment & { ideas: { name: string } })[];
-  landingPrompts: LandingPrompt[];
-  starred: boolean;
-}
-
-export async function getIdeaDetail(ideaId: string): Promise<IdeaDetail | null> {
-  const supabase = createClient();
-  // The profiles RLS policy returns exactly the caller's row, so this is the
-  // current user's internal id (app_uid) without trusting client input.
-  const { data: me } = await supabase.from("profiles").select("id").maybeSingle();
-
-  const { data: idea } = await supabase
-    .from("ideas")
+  const { data } = await supabase
+    .from("prospects")
     .select("*")
-    .eq("id", ideaId)
-    .single();
-  if (!idea) return null;
+    .eq("account_id", accountId)
+    .in("status", ["ready", "in_dock", "sent", "replied", "won", "lost"])
+    .order("opportunity_score", { ascending: false })
+    .limit(300);
+  return (data ?? []) as Prospect[];
+}
 
-  const [{ data: node }, { data: pains }, { data: siblings }, { data: assessments }, { data: prompts }, { data: signal }] =
-    await Promise.all([
-      supabase.from("market_nodes").select("label").eq("id", idea.node_id).single(),
-      supabase
-        .from("pain_points")
-        .select("*, pain_quotes(*)")
-        .eq("node_id", idea.node_id)
-        .order("priority_rank", { ascending: true }),
-      supabase
-        .from("ideas")
-        .select("*")
-        .eq("node_id", idea.node_id)
-        .neq("id", ideaId)
-        .order("score", { ascending: false }),
-      supabase
-        .from("assessments")
-        .select("*, ideas(name)")
-        .eq("node_id", idea.node_id)
-        .order("rank", { ascending: true }),
-      supabase
-        .from("landing_prompts")
-        .select("*")
-        .eq("idea_id", ideaId)
-        .order("created_at", { ascending: false }),
-      me
-        ? supabase
-            .from("idea_signals")
-            .select("id")
-            .eq("idea_id", ideaId)
-            .eq("user_id", me.id)
-            .eq("kind", "star")
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
+export interface ProspectDetail {
+  prospect: Prospect;
+  hunt: Hunt | null;
+  mockup: Mockup | null;
+  outreach: Outreach | null;
+  canGenerate: boolean;
+}
+
+export async function getProspectDetail(prospectId: string): Promise<ProspectDetail | null> {
+  const supabase = createClient();
+  const { data: prospect } = await supabase
+    .from("prospects")
+    .select("*")
+    .eq("id", prospectId)
+    .single();
+  if (!prospect) return null;
+
+  const [{ data: hunt }, { data: mockup }, { data: outreach }] = await Promise.all([
+    supabase.from("hunts").select("*").eq("id", prospect.hunt_id).maybeSingle(),
+    supabase
+      .from("mockups")
+      .select("*")
+      .eq("prospect_id", prospectId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("outreach").select("*").eq("prospect_id", prospectId).maybeSingle(),
+  ]);
 
   return {
-    idea: idea as Idea,
-    nodeLabel: node?.label ?? "",
-    painPoints: (pains ?? []) as IdeaDetail["painPoints"],
-    siblings: (siblings ?? []) as Idea[],
-    assessments: (assessments ?? []) as IdeaDetail["assessments"],
-    landingPrompts: (prompts ?? []) as LandingPrompt[],
-    starred: !!signal,
+    prospect: prospect as Prospect,
+    hunt: (hunt ?? null) as Hunt | null,
+    mockup: (mockup ?? null) as Mockup | null,
+    outreach: (outreach ?? null) as Outreach | null,
+    canGenerate: true,
   };
+}
+
+export interface DockItem {
+  outreach: Outreach;
+  prospect: Pick<Prospect, "id" | "name" | "website_url" | "has_website" | "tier" | "contact_email">;
+}
+
+export async function getDock(accountId: string): Promise<DockItem[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("outreach")
+    .select("*, prospects(id, name, website_url, has_website, tier, contact_email)")
+    .eq("account_id", accountId)
+    .order("updated_at", { ascending: false })
+    .limit(200);
+  return ((data ?? []) as unknown as (Outreach & { prospects: DockItem["prospect"] })[]).map((row) => ({
+    outreach: row,
+    prospect: row.prospects,
+  }));
+}
+
+export async function getHunts(accountId: string): Promise<Hunt[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("hunts")
+    .select("*")
+    .eq("account_id", accountId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  return (data ?? []) as Hunt[];
 }
 
 export async function getRuns(accountId: string): Promise<Run[]> {
@@ -236,7 +201,7 @@ export async function getUsage(accountId: string): Promise<UsageSummary[]> {
     .from("usage_events")
     .select("provider, request_count, input_tokens, output_tokens")
     .eq("account_id", accountId)
-    .limit(2000);
+    .limit(3000);
 
   const byProvider = new Map<string, UsageSummary>();
   for (const row of data ?? []) {

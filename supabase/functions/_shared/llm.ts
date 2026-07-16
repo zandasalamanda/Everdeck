@@ -40,6 +40,11 @@ async function geminiComplete(req: LlmRequest, apiKey: string): Promise<LlmRespo
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastGeminiCall = Date.now();
 
+  // Model is env-configurable; the default is a rolling alias so the app
+  // doesn't break when Google retires a dated model (e.g. gemini-2.0-flash
+  // shut down 2026-06-01). Set GEMINI_MODEL to pin a specific version.
+  const model = Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-latest";
+
   const body = {
     system_instruction: { parts: [{ text: req.system }] },
     contents: [{ role: "user", parts: [{ text: req.user }] }],
@@ -54,7 +59,7 @@ async function geminiComplete(req: LlmRequest, apiKey: string): Promise<LlmRespo
     try {
       // Key goes in the header, never the URL, so it can't leak into an
       // error message that reaches the (client-readable) jobs.last_error.
-      res = await fetch(`${GEMINI_BASE}/${req.model}:generateContent`, {
+      res = await fetch(`${GEMINI_BASE}/${model}:generateContent`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify(body),
@@ -88,7 +93,7 @@ async function geminiComplete(req: LlmRequest, apiKey: string): Promise<LlmRespo
     return {
       text,
       provider: "gemini",
-      model: req.model,
+      model,
       inputTokens: usage.promptTokenCount ?? 0,
       outputTokens: usage.candidatesTokenCount ?? 0,
     };

@@ -2,7 +2,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Compass,
-  Inbox,
   Layers,
   Lock,
   Mail,
@@ -17,30 +16,30 @@ import {
 import Logo from "@/components/marketing/Logo";
 
 const SIDEBAR_NAV = [
-  { label: "Explore", icon: Compass, active: true },
-  { label: "Niches", icon: Layers, active: false },
-  { label: "Inbox", icon: Inbox, active: false },
-  { label: "Daily digest", icon: Mail, active: false },
+  { label: "Prospects", icon: Compass, active: true },
+  { label: "Mockups", icon: Layers, active: false },
+  { label: "Outreach", icon: Mail, active: false },
+  { label: "Audits", icon: Monitor, active: false },
 ];
 
 const STATS = [
-  { label: "IDEAS", value: "62", detail: "Scored & ranked", bars: [5, 8, 6, 10, 12] },
-  { label: "NICHES", value: "12", detail: "Market branches", bars: [4, 6, 7, 7, 9] },
-  { label: "GAPS", value: "412", detail: "Ready to build", bars: [6, 9, 8, 12, 14] },
-  { label: "REACH", value: "3.1M", detail: "Searches a month", bars: [7, 8, 11, 12, 13] },
+  { label: "PROSPECTS", value: "48", detail: "Found today", bars: [5, 8, 6, 10, 12] },
+  { label: "NO SITE", value: "17", detail: "No website at all", bars: [4, 6, 7, 7, 9] },
+  { label: "MOCKUPS", value: "12", detail: "Ready to review", bars: [6, 9, 8, 12, 14] },
+  { label: "DRAFTS", value: "9", detail: "Emails to send", bars: [7, 8, 11, 12, 13] },
 ];
 
-const TOP_IDEAS = [
-  { title: "Fall-alert pendant, one-time purchase", score: 86, demand: 84 },
-  { title: "Dementia med reminders with family escalation", score: 81, demand: 71 },
-  { title: "Room-by-room home safety audit marketplace", score: 78, demand: 62 },
+const TOP_PROSPECTS = [
+  { title: "Bright Smile Dental — no website at all", score: 92, opportunity: 92 },
+  { title: "Cedar Family Dentistry — slow, not mobile", score: 84, opportunity: 78 },
+  { title: "Downtown Ortho — outdated 2011 site", score: 79, opportunity: 66 },
 ];
 
-const GAP_FEED = [
-  { pain: "How do I make a home safer for an aging parent?", volume: "74k/mo", live: false },
-  { pain: "Best medication reminder for dementia patients", volume: "41k/mo", live: false },
-  { pain: "GPS tracker for seniors who wander", volume: "33k/mo", live: false },
-  { pain: "Affordable alternatives to stair lifts", volume: "23k/mo", live: true },
+const PROSPECT_FEED = [
+  { name: "Bright Smile Dental", site: "No site", live: false },
+  { name: "Cedar Family Dentistry", site: "Site 41", live: false },
+  { name: "Maple Ave Family Plumbing", site: "Site 28", live: false },
+  { name: "Downtown Ortho Studio", site: "No site", live: true },
 ];
 
 function ScorePill({ score }: { score: number }) {

@@ -1,0 +1,3 @@
+-- Applied to prod as `link_runs_to_hunts`. Adds runs.hunt_id and extends
+-- complete_job() to mark the hunt 'done' when its run drains. start_hunt
+-- stamps the run with its hunt id.

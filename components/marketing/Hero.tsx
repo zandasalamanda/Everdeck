@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
 import Navbar from "@/components/marketing/Navbar";
 import DashboardMockup from "@/components/marketing/DashboardMockup";
@@ -20,12 +20,13 @@ const GRASS_URL =
 
 const DASHBOARD_DESIGN_WIDTH = 896;
 
-const EXAMPLE_MARKETS = [
-  "senior health",
-  "pet longevity",
-  "home coffee",
-  "sleep tech",
-  "youth sports gear",
+const EXAMPLE_TYPES = [
+  "dentists",
+  "plumbers",
+  "law firms",
+  "med spas",
+  "roofers",
+  "cafés",
 ];
 
 /** Bright specks drifting over the hero photo. */
@@ -84,7 +85,7 @@ function ScaledDashboard({ children }: { children: ReactNode }) {
   );
 }
 
-/** Cycles example markets into the search placeholder, typewriter style. */
+/** Cycles example business types into the search placeholder, typewriter style. */
 function useTypedExample() {
   const [typed, setTyped] = useState("");
 
@@ -97,7 +98,7 @@ function useTypedExample() {
     let timer: number;
 
     const tick = () => {
-      const word = EXAMPLE_MARKETS[wordIndex];
+      const word = EXAMPLE_TYPES[wordIndex];
       if (!deleting) {
         chars += 1;
         setTyped(word.slice(0, chars));
@@ -112,7 +113,7 @@ function useTypedExample() {
         setTyped(word.slice(0, chars));
         if (chars === 0) {
           deleting = false;
-          wordIndex = (wordIndex + 1) % EXAMPLE_MARKETS.length;
+          wordIndex = (wordIndex + 1) % EXAMPLE_TYPES.length;
           timer = window.setTimeout(tick, 500);
           return;
         }
@@ -194,16 +195,16 @@ export default function Hero() {
             New
           </span>
           <span className="text-[13px] text-ink/80">
-            Every market, scanned daily
+            Fresh prospects, found every morning
           </span>
         </a>
 
         <h1 className="text-ink font-normal leading-[1.05] tracking-tight text-[40px] min-[400px]:text-[44px] sm:text-6xl lg:text-7xl xl:text-[80px]">
           <span className="block animate-fade-up [animation-delay:100ms]">
-            Find your market.
+            Show up with the website
           </span>
-          <span className="block animate-fade-up font-serif italic [animation-delay:200ms]">
-            Effortlessly.
+          <span className="block animate-fade-up [animation-delay:200ms]">
+            already <span className="font-serif italic">built</span>.
           </span>
         </h1>
 
@@ -211,29 +212,36 @@ export default function Hero() {
           className="animate-fade-up [animation-delay:320ms] mt-5 sm:mt-6 w-full max-w-xl"
           onSubmit={(event) => {
             event.preventDefault();
-            const market = new FormData(event.currentTarget)
-              .get("market")
-              ?.toString()
-              .trim();
-            // Start the product with their market in hand — not a sales page.
-            window.location.href = market
-              ? `/sign-up?market=${encodeURIComponent(market)}`
-              : "/sign-up";
+            const data = new FormData(event.currentTarget);
+            const type = data.get("type")?.toString().trim();
+            const location = data.get("location")?.toString().trim();
+            // Start the product mid-hunt — with their type and city in hand.
+            const params = new URLSearchParams();
+            if (type) params.set("type", type);
+            if (location) params.set("location", location);
+            const query = params.toString();
+            window.location.href = query ? `/sign-up?${query}` : "/sign-up";
           }}
         >
-          <div className="flex items-center gap-3 rounded-full bg-white/60 backdrop-blur-md ring-1 ring-ink/10 pl-5 pr-1.5 py-1.5 transition-shadow focus-within:shadow-lift">
+          <div className="flex items-center gap-2 rounded-full bg-white/60 backdrop-blur-md ring-1 ring-ink/10 pl-5 pr-1.5 py-1.5 transition-shadow focus-within:shadow-lift">
             <input
               type="text"
-              name="market"
-              placeholder={
-                typed ? `Try “${typed}”` : "What market should we explore?"
-              }
-              aria-label="What market should we explore?"
-              className="flex-1 bg-transparent text-sm sm:text-base text-ink placeholder-slate outline-none py-2"
+              name="type"
+              placeholder={typed || "dentists"}
+              aria-label="Business type to find"
+              className="min-w-0 flex-1 bg-transparent text-sm sm:text-base text-ink placeholder-slate outline-none py-2"
+            />
+            <span aria-hidden="true" className="h-5 w-px shrink-0 bg-ink/15" />
+            <input
+              type="text"
+              name="location"
+              placeholder="Austin, TX"
+              aria-label="City to search in"
+              className="min-w-0 flex-1 bg-transparent text-sm sm:text-base text-ink placeholder-slate outline-none py-2"
             />
             <button
               type="submit"
-              aria-label="Get started"
+              aria-label="Find prospects"
               className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-ink text-white hover:scale-105 active:scale-95 transition-transform shrink-0"
             >
               <ArrowUp className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
@@ -241,11 +249,10 @@ export default function Hero() {
           </div>
         </form>
 
-        <p className="animate-fade-up [animation-delay:440ms] mt-4 sm:mt-5 text-ink/70 text-sm sm:text-base lg:text-lg leading-relaxed max-w-md">
-          Everdeck studies the market and hands you scored business ideas every day,
-          <br />
-          mapped out and ready to{" "}
-          <Sparkles className="inline w-4 h-4 -mt-1 text-ink/60" /> build
+        <p className="animate-fade-up [animation-delay:440ms] mt-4 sm:mt-5 text-ink/70 text-sm sm:text-base lg:text-lg leading-relaxed max-w-lg">
+          Everdeck finds local businesses with weak or missing websites, designs a
+          better one, and drafts the outreach — so you pitch with the work already
+          done.
         </p>
 
         <div className="animate-fade-up [animation-delay:560ms] mt-4 sm:mt-5 flex flex-wrap items-center justify-center gap-3">
@@ -259,7 +266,7 @@ export default function Hero() {
             href="#deck"
             className="text-ink/80 text-sm font-medium px-6 py-2.5 rounded-full ring-1 ring-ink/20 hover:bg-white/50 transition-colors"
           >
-            See today's deck
+            See the pitch
           </a>
         </div>
       </div>
