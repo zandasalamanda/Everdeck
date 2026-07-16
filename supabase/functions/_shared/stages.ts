@@ -176,7 +176,7 @@ export async function runGenerate(db: Db, job: Job): Promise<void> {
   const res = await complete({
     system: GENERATE_SYSTEM,
     user: `STAGE: generate\nBUSINESS: ${p.name}\nTYPE: ${hunt?.business_type ?? "local business"}\nLOCATION: ${hunt?.location ?? ""}\nHAS_SITE: ${p.has_website}\nCURRENT_URL: ${p.website_url ?? "none"}`,
-    model: "gemini-2.0-flash",
+    model: "gemini-flash-latest",
     maxOutputTokens: 8192,
     seed: p.name,
   });

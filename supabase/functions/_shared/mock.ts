@@ -24,7 +24,7 @@ function titleCase(s: string): string {
 /** A realistic list of local businesses; ~40% have no website, the rest weak. */
 export function mockBusinesses(type: string, location: string, limit: number): Business[] {
   const seed = hash(`${type}|${location}`);
-  const singular = titleCase(type.replace(/s\b/, ""));
+  const singular = titleCase(type.replace(/ies\b/i, "y").replace(/s\b/i, ""));
   const out: Business[] = [];
   for (let i = 0; i < limit; i++) {
     // Unsigned shifts throughout — signed >> on a uint32 > 2^31 goes negative
