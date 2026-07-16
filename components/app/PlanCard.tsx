@@ -56,10 +56,12 @@ export default function PlanCard({
       if (!res.ok) throw new Error(json.error ?? `billing error (${res.status})`);
 
       if (json.url) {
-        window.location.href = json.url as string; // Stripe Checkout
+        window.location.href = json.url as string; // Stripe Checkout / Portal
         return;
       }
-      router.refresh(); // sandbox path applied immediately
+      // sandbox action, or in-place Stripe plan change — reflect on refresh
+      // (Stripe changes finalize when the webhook lands a moment later).
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {

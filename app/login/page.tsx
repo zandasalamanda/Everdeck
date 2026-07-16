@@ -12,7 +12,13 @@ type Mode = "signin" | "signup" | "magic";
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") ?? "/app";
+  // Only same-origin relative paths — never a protocol-relative (//host) or
+  // absolute URL, which would be an open redirect.
+  const rawNext = params.get("next") ?? "/app";
+  const next =
+    rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.startsWith("/\\")
+      ? rawNext
+      : "/app";
 
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");

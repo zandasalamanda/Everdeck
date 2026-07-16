@@ -17,5 +17,6 @@
     "paths": { "@/*": ["./*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "supabase"]
+  "comment": "supabase/* is Deno (own runtime/globals); tests/* are Deno-importing and run by vitest. Both are excluded from the Next app typecheck.",
+  "exclude": ["node_modules", "supabase", "tests"]
 }

@@ -26,6 +26,11 @@ export interface LlmResponse {
 
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
+/** Belt-and-suspenders: redact anything key-shaped from error text. */
+function scrub(s: string): string {
+  return s.replace(/key=[\w-]+/gi, "key=REDACTED").replace(/AIza[\w-]{20,}/g, "REDACTED");
+}
+
 /** Naive rate limiter: serialize Gemini calls with a minimum gap. */
 let lastGeminiCall = 0;
 const MIN_GAP_MS = 4_100; // ~14 rpm, safely under the 15 rpm free tier
@@ -45,11 +50,23 @@ async function geminiComplete(req: LlmRequest, apiKey: string): Promise<LlmRespo
   };
 
   for (let attempt = 0; attempt < 4; attempt++) {
-    const res = await fetch(`${GEMINI_BASE}/${req.model}:generateContent?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    let res: Response;
+    try {
+      // Key goes in the header, never the URL, so it can't leak into an
+      // error message that reaches the (client-readable) jobs.last_error.
+      res = await fetch(`${GEMINI_BASE}/${req.model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      // Network-layer failure (DNS/TLS/timeout): back off and retry.
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 2 ** attempt * 2_000));
+        continue;
+      }
+      throw new Error(`gemini: network error after retries: ${scrub(String(err))}`);
+    }
 
     if (res.status === 429 || res.status >= 500) {
       const backoff = 2 ** attempt * 2_000;
@@ -57,11 +74,16 @@ async function geminiComplete(req: LlmRequest, apiKey: string): Promise<LlmRespo
       continue;
     }
     if (!res.ok) {
-      throw new Error(`gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      throw new Error(`gemini ${res.status}: ${scrub((await res.text()).slice(0, 300))}`);
     }
 
     const json = await res.json();
-    const text = json.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const candidate = json.candidates?.[0];
+    const text = candidate?.content?.parts?.[0]?.text ?? "";
+    // Truncated output produces invalid JSON downstream — fail loudly now.
+    if (candidate?.finishReason && candidate.finishReason !== "STOP") {
+      throw new Error(`gemini: incomplete response (finishReason=${candidate.finishReason})`);
+    }
     const usage = json.usageMetadata ?? {};
     return {
       text,

@@ -22,6 +22,25 @@ function planFromPrice(priceId: string | null | undefined): string {
   return "free";
 }
 
+/** current_period_end moved onto items in newer Stripe API versions; read
+ *  from either location so the endpoint's API version doesn't matter. */
+function periodEndISO(sub: Stripe.Subscription): string | null {
+  const item = sub.items?.data?.[0] as { current_period_end?: number } | undefined;
+  const raw =
+    (sub as unknown as { current_period_end?: number }).current_period_end ??
+    item?.current_period_end;
+  return raw ? new Date(raw * 1000).toISOString() : null;
+}
+
+/** invoice.subscription likewise moved under parent.subscription_details. */
+function invoiceSubId(inv: Stripe.Invoice): string | null {
+  const legacy = (inv as unknown as { subscription?: string }).subscription;
+  const nested = (
+    inv as unknown as { parent?: { subscription_details?: { subscription?: string } } }
+  ).parent?.subscription_details?.subscription;
+  return legacy ?? nested ?? null;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response("method not allowed", { status: 405 });
 
@@ -52,6 +71,10 @@ Deno.serve(async (req: Request) => {
     return new Response("invalid signature", { status: 400 });
   }
 
+  // Replay / out-of-order guard: ignore events older than the row's last
+  // write. event.created is seconds since epoch.
+  const eventTsISO = new Date(event.created * 1000).toISOString();
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -73,12 +96,11 @@ Deno.serve(async (req: Request) => {
             stripe_customer_id: (session.customer as string) ?? null,
             stripe_subscription_id: (session.subscription as string) ?? null,
             price_id: priceId ?? null,
-            current_period_end: subscription
-              ? new Date(subscription.current_period_end * 1000).toISOString()
-              : null,
-            updated_at: new Date().toISOString(),
+            current_period_end: subscription ? periodEndISO(subscription) : null,
+            updated_at: eventTsISO,
           })
-          .eq("account_id", accountId);
+          .eq("account_id", accountId)
+          .lte("updated_at", eventTsISO);
         break;
       }
 
@@ -92,25 +114,29 @@ Deno.serve(async (req: Request) => {
           .from("subscriptions")
           .update({
             plan: deleted ? "free" : planFromPrice(priceId),
-            status: deleted ? "active" : subscription.status,
+            status: deleted ? "canceled" : subscription.status,
             source: "stripe",
             price_id: deleted ? null : (priceId ?? null),
-            current_period_end: deleted
-              ? null
-              : new Date(subscription.current_period_end * 1000).toISOString(),
-            updated_at: new Date().toISOString(),
+            // Clear the subscription id on delete so stale retries for a
+            // terminated subscription can no longer target this row.
+            stripe_subscription_id: deleted ? null : subscription.id,
+            current_period_end: deleted ? null : periodEndISO(subscription),
+            updated_at: eventTsISO,
           })
-          .eq("stripe_subscription_id", subscription.id);
+          .eq("stripe_subscription_id", subscription.id)
+          .lte("updated_at", eventTsISO);
         break;
       }
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
-        if (invoice.subscription) {
+        const subId = invoiceSubId(invoice);
+        if (subId) {
           await admin
             .from("subscriptions")
-            .update({ status: "past_due", updated_at: new Date().toISOString() })
-            .eq("stripe_subscription_id", invoice.subscription as string);
+            .update({ status: "past_due", updated_at: eventTsISO })
+            .eq("stripe_subscription_id", subId)
+            .lte("updated_at", eventTsISO);
         }
         break;
       }

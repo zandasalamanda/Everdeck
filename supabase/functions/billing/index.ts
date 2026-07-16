@@ -69,13 +69,28 @@ Deno.serve(async (req: Request) => {
 
       const { data: sub } = await admin
         .from("subscriptions")
-        .select("stripe_customer_id")
+        .select("stripe_customer_id, stripe_subscription_id, status")
         .eq("account_id", caller.accountId)
         .single();
+
+      const hasActiveSub =
+        !!sub?.stripe_subscription_id && ["active", "trialing", "past_due"].includes(sub.status);
 
       if (action === "checkout") {
         const priceId = plan ? PRICE_IDS[plan] : undefined;
         if (!priceId) return Response.json({ error: "unknown plan" }, { status: 400, headers: cors });
+
+        // A customer with an existing subscription must CHANGE it, not open
+        // a second concurrent one (which Stripe Checkout would create and
+        // double-bill). Swap the price in place with proration.
+        if (hasActiveSub) {
+          const current = await stripe.subscriptions.retrieve(sub!.stripe_subscription_id!);
+          await stripe.subscriptions.update(current.id, {
+            items: [{ id: current.items.data[0].id, price: priceId }],
+            proration_behavior: "create_prorations",
+          });
+          return Response.json({ changed: true, plan }, { headers: cors });
+        }
 
         const session = await stripe.checkout.sessions.create({
           mode: "subscription",
@@ -89,7 +104,8 @@ Deno.serve(async (req: Request) => {
         return Response.json({ url: session.url }, { headers: cors });
       }
 
-      if (action === "portal") {
+      // Downgrade in real-Stripe mode = cancel at period end via the Portal.
+      if (action === "portal" || action === "downgrade") {
         if (!sub?.stripe_customer_id) {
           return Response.json({ error: "no stripe customer yet" }, { status: 400, headers: cors });
         }

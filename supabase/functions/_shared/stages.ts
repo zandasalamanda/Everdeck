@@ -26,6 +26,28 @@ interface PromptConfig {
 
 type Db = SupabaseClient;
 
+/** A parse failure on a deterministic prompt is permanent — don't burn
+ *  retries on it. Callers surface this as a terminal run error. */
+class PermanentStageError extends Error {}
+
+function parseJson<T>(text: string, where: string): T {
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new PermanentStageError(
+      `${where}: model returned unparseable/truncated JSON (${text.length} chars)`,
+    );
+  }
+}
+
+/** supabase-js rpc()/insert() return { error } instead of throwing, so a
+ *  dropped enqueue would silently orphan the run. Fail loudly instead. */
+function assertOk(error: { message: string } | null, where: string): void {
+  if (error) throw new Error(`${where}: ${error.message}`);
+}
+
+export { PermanentStageError };
+
 async function promptFor(db: Db, stage: number): Promise<PromptConfig> {
   const { data, error } = await db
     .from("prompt_configs")
@@ -109,7 +131,10 @@ export async function runStage1(db: Db, job: Job): Promise<void> {
     });
     await meter(db, job, res);
 
-    const tree = JSON.parse(res.text) as { nodes: TreeNode[] };
+    const tree = parseJson<{ nodes: TreeNode[] }>(res.text, "stage1");
+    if (!Array.isArray(tree.nodes) || tree.nodes.length === 0) {
+      throw new PermanentStageError("stage1: empty node tree");
+    }
 
     const insertNode = async (
       node: TreeNode,
@@ -143,12 +168,13 @@ export async function runStage1(db: Db, job: Job): Promise<void> {
   const chosen = leaves.slice(0, leafBudget);
 
   for (const leaf of chosen) {
-    await db.rpc("enqueue_job", {
+    const { error } = await db.rpc("enqueue_job", {
       p_account_id: job.account_id,
       p_run_id: job.run_id,
       p_stage: 2,
       p_payload: { market_id: marketId, node_id: leaf.id, node_label: leaf.label },
     });
+    assertOk(error, "stage1 enqueue stage2");
   }
 
   await db
@@ -193,12 +219,13 @@ export async function runStage2(db: Db, job: Job): Promise<void> {
     });
   }
 
-  await db.rpc("enqueue_job", {
+  const { error: enqErr } = await db.rpc("enqueue_job", {
     p_account_id: job.account_id,
     p_run_id: job.run_id,
     p_stage: 3,
     p_payload: job.payload,
   });
+  assertOk(enqErr, "stage2 enqueue stage3");
 }
 
 /** Stage 3 — Pain Point Extractor. */
@@ -231,7 +258,7 @@ export async function runStage3(db: Db, job: Job): Promise<void> {
     });
     await meter(db, job, res);
 
-    const parsed = JSON.parse(res.text) as {
+    const parsed = parseJson<{
       pain_points: {
         heading: string;
         summary: string;
@@ -240,7 +267,10 @@ export async function runStage3(db: Db, job: Job): Promise<void> {
         intensity: string;
       }[];
       priority_ranking: string[];
-    };
+    }>(res.text, "stage3");
+    if (!Array.isArray(parsed.pain_points)) {
+      throw new PermanentStageError("stage3: missing pain_points array");
+    }
 
     for (const [i, pp] of parsed.pain_points.entries()) {
       const rank = parsed.priority_ranking.indexOf(pp.heading);
@@ -263,23 +293,25 @@ export async function runStage3(db: Db, job: Job): Promise<void> {
       if (error) throw new Error(`pain_point insert: ${error.message}`);
 
       if (pp.quotes?.length) {
-        await db.from("pain_quotes").insert(
+        const { error: qErr } = await db.from("pain_quotes").insert(
           pp.quotes.slice(0, 5).map((q) => ({
             account_id: job.account_id,
             pain_point_id: row.id,
             quote: q.slice(0, 1000),
           })),
         );
+        assertOk(qErr, "pain_quotes insert");
       }
     }
   }
 
-  await db.rpc("enqueue_job", {
+  const { error: enqErr } = await db.rpc("enqueue_job", {
     p_account_id: job.account_id,
     p_run_id: job.run_id,
     p_stage: 4,
     p_payload: job.payload,
   });
+  assertOk(enqErr, "stage3 enqueue stage4");
 }
 
 /** Stage 4 — Market Gap Generator: concepts + top-3, colors the map. */
@@ -315,7 +347,7 @@ export async function runStage4(db: Db, job: Job): Promise<void> {
   });
   await meter(db, job, res);
 
-  const parsed = JSON.parse(res.text) as {
+  const parsed = parseJson<{
     concepts: {
       framework: string;
       name: string;
@@ -328,7 +360,10 @@ export async function runStage4(db: Db, job: Job): Promise<void> {
       score: number;
     }[];
     top3: { name: string; rank: number; rationale: string }[];
-  };
+  }>(res.text, "stage4");
+  if (!Array.isArray(parsed.concepts) || parsed.concepts.length === 0) {
+    throw new PermanentStageError("stage4: missing concepts array");
+  }
 
   const tierOf = (s: number) => (s >= 75 ? "high" : s >= 50 ? "med" : "low");
   const idsByName = new Map<string, string>();

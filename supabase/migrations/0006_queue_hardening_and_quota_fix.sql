@@ -1,0 +1,19 @@
+-- Applied to prod as `queue_hardening_and_quota_fix` after the adversarial
+-- security review. Four fixes:
+--   1. claim_jobs reclaims stale 'running' jobs (locked_at < now()-10min) so
+--      a job orphaned by a killed isolate is retried, not stuck forever.
+--   2. fail_job(p_permanent boolean) dead-letters deterministic failures
+--      (truncated/invalid model JSON) immediately instead of retrying.
+--   3. start_run daily-run quota counts only real pipeline runs (those with a
+--      stage-1 job) so landing-prompt runs no longer eat the quota.
+--   4. request_landing_prompt caps Stage-5 at 10/day and reuses the idea's
+--      originating run instead of minting a quota-relevant run row.
+-- Full DDL is in the connector migration history (version 20260716...).
+-- See supabase/functions comments for the invariants these enforce.
+
+-- Go-live note (NOT auto-applied): before switching Stripe on, reset any
+-- plans that were granted while billing sandbox was active, so nobody keeps
+-- a paid plan for free:
+--   update public.subscriptions set plan='free', source='sandbox',
+--     current_period_end=null, updated_at=now()
+--   where source='sandbox' and plan <> 'free';

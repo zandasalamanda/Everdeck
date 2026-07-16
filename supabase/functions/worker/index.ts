@@ -13,7 +13,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-import { runStage } from "../_shared/stages.ts";
+import { PermanentStageError, runStage } from "../_shared/stages.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -28,8 +28,8 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
 
 let cachedToken: string | null = null;
 
-async function workerToken(): Promise<string> {
-  if (!cachedToken) {
+async function workerToken(force = false): Promise<string> {
+  if (!cachedToken || force) {
     const { data, error } = await admin.rpc("get_worker_token");
     if (error) throw new Error(`get_worker_token: ${error.message}`);
     cachedToken = data as string;
@@ -44,21 +44,33 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-async function authorize(req: Request): Promise<boolean> {
+type Principal = "cron" | "user" | null;
+
+/**
+ * Returns which principal authenticated the request:
+ *   "cron" — valid vault worker token (the pg_cron heartbeat), full trust
+ *   "user" — a valid Supabase user JWT, limited to draining its own queue
+ *   null   — unauthenticated
+ * Only the "cron" principal may enqueue system-wide work (task=daily).
+ */
+async function authorize(req: Request): Promise<Principal> {
   const token = req.headers.get("x-worker-token");
   if (token) {
-    return timingSafeEqual(token, await workerToken());
+    if (timingSafeEqual(token, await workerToken())) return "cron";
+    // Token may have been rotated in vault since this isolate warmed up.
+    if (timingSafeEqual(token, await workerToken(true))) return "cron";
+    return null;
   }
 
   const authHeader = req.headers.get("Authorization") ?? "";
   const jwt = authHeader.replace(/^Bearer\s+/i, "");
-  if (!jwt) return false;
+  if (!jwt) return null;
 
   const anonClient = createClient(SUPABASE_URL, ANON_KEY, {
     auth: { persistSession: false },
   });
   const { data, error } = await anonClient.auth.getUser(jwt);
-  return !error && !!data.user;
+  return !error && data.user ? "user" : null;
 }
 
 async function tick(): Promise<{ claimed: number; done: number; failed: number }> {
@@ -78,7 +90,13 @@ async function tick(): Promise<{ claimed: number; done: number; failed: number }
       done++;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      await admin.rpc("fail_job", { p_job_id: job.id, p_error: message.slice(0, 800) });
+      // Deterministic failures (bad/truncated model JSON) won't fix themselves
+      // on retry — send them straight to the dead-letter state.
+      await admin.rpc("fail_job", {
+        p_job_id: job.id,
+        p_error: message.slice(0, 800),
+        p_permanent: err instanceof PermanentStageError,
+      });
       failed++;
     }
   }
@@ -91,7 +109,8 @@ Deno.serve(async (req: Request) => {
     return new Response("method not allowed", { status: 405 });
   }
 
-  if (!(await authorize(req))) {
+  const principal = await authorize(req);
+  if (!principal) {
     return new Response("unauthorized", { status: 401 });
   }
 
@@ -99,6 +118,10 @@ Deno.serve(async (req: Request) => {
 
   try {
     if (task === "daily") {
+      // System-wide enqueue touches every engine account — cron only.
+      if (principal !== "cron") {
+        return new Response("forbidden", { status: 403 });
+      }
       const { data: enqueued, error } = await admin.rpc("enqueue_daily_autonomous");
       if (error) throw new Error(`enqueue_daily_autonomous: ${error.message}`);
       const result = await tick();
