@@ -5,8 +5,10 @@
 //   POST /worker?task=daily  — enqueue autonomous runs, then tick once
 //
 // Auth (verify_jwt is disabled; this function does its own):
-//   1. `x-worker-token` header matching the vault-stored token (pg_cron), or
-//   2. a valid Supabase user JWT in Authorization (the in-app "Run now").
+//   1. `x-worker-token` header matching the vault-stored token (pg_cron)
+//      → "cron" principal, may run task=daily (system-wide enqueue), or
+//   2. a valid Clerk session JWT in Authorization (the in-app "Run now")
+//      → "user" principal, may only drain the queue (task=tick).
 //
 // The service-role key is injected by the platform and never leaves this
 // process. account_id always comes from the job row — never from input.
@@ -14,10 +16,10 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { PermanentStageError, runStage } from "../_shared/stages.ts";
+import { bearer, verifyClerkJwt } from "../_shared/clerk.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 const TICK_BATCH = Number(Deno.env.get("TICK_BATCH") ?? 6);
 const WORKER_ID = `edge-${crypto.randomUUID().slice(0, 8)}`;
@@ -62,15 +64,11 @@ async function authorize(req: Request): Promise<Principal> {
     return null;
   }
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const jwt = authHeader.replace(/^Bearer\s+/i, "");
+  const jwt = bearer(req);
   if (!jwt) return null;
 
-  const anonClient = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false },
-  });
-  const { data, error } = await anonClient.auth.getUser(jwt);
-  return !error && data.user ? "user" : null;
+  const claims = await verifyClerkJwt(jwt);
+  return claims ? "user" : null;
 }
 
 async function tick(): Promise<{ claimed: number; done: number; failed: number }> {

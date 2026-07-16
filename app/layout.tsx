@@ -3,6 +3,7 @@ import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
   title: "Everdeck — Find your market. Effortlessly.",
@@ -29,7 +30,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           href="https://db.onlinewebfonts.com/c/bb5de19d87c09a95216dc6ccd96e37c6?family=Nimbus+Sans+TW01"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <ClerkProvider
+          appearance={{ variables: { colorPrimary: "#0E0E10" } }}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+        >
+          {children}
+        </ClerkProvider>
+      </body>
     </html>
   );
 }

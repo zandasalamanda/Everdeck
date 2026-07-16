@@ -37,7 +37,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <a
-            href="#pricing"
+            href="/sign-up"
             className="bg-ink text-white text-[13px] font-medium px-4 sm:px-5 py-2 rounded-full hover:bg-graphite transition-colors"
           >
             Get started

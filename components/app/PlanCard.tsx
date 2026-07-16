@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Check } from "lucide-react";
 
 import { FUNCTIONS_URL } from "@/lib/publicConfig";
-import { createClient } from "@/lib/supabase/client";
 import type { Plan } from "@/lib/types";
 
 export default function PlanCard({
@@ -22,6 +22,7 @@ export default function PlanCard({
   featured: boolean;
 }) {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,17 +37,14 @@ export default function PlanCard({
     setBusy(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not signed in.");
+      const token = await getToken();
+      if (!token) throw new Error("Not signed in.");
 
       const res = await fetch(`${FUNCTIONS_URL}/billing`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(
           action === "checkout" ? { action, plan: plan.plan } : { action },

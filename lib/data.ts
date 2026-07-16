@@ -1,5 +1,8 @@
-// Server-side data helpers. All queries run with the user's JWT — RLS is
-// the enforcement layer; these helpers never see other accounts' rows.
+// Server-side data helpers. All queries run with the current Clerk user's
+// JWT — RLS is the enforcement layer; these helpers never see other
+// accounts' rows.
+
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 import { createClient } from "@/lib/supabase/server";
 import type {
@@ -23,13 +26,25 @@ export interface Workspace {
   email: string;
 }
 
-/** The signed-in user's workspace (first account membership). */
+/** The signed-in user's workspace (first account membership).
+ *  Provisions the workspace on first visit and keeps email/name in sync. */
 export async function getWorkspace(): Promise<Workspace | null> {
+  const { userId } = await auth();
+  if (!userId) return null;
+
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+
+  // Idempotent: creates profile+account+membership+subscription for a brand
+  // new Clerk user, otherwise a no-op. Identity is read from the verified
+  // JWT inside the RPC, never passed in.
+  await supabase.rpc("ensure_workspace");
+
+  const user = await currentUser();
+  const email = user?.primaryEmailAddress?.emailAddress ?? "";
+  const name = user?.firstName ?? user?.username ?? "";
+  if (email || name) {
+    await supabase.rpc("sync_profile", { p_email: email, p_name: name });
+  }
 
   const { data: account } = await supabase
     .from("accounts")
@@ -66,7 +81,7 @@ export async function getWorkspace(): Promise<Workspace | null> {
       landing_prompts: false,
       engine: false,
     }) as Plan,
-    email: user.email ?? "",
+    email,
   };
 }
 
@@ -140,9 +155,9 @@ export interface IdeaDetail {
 
 export async function getIdeaDetail(ideaId: string): Promise<IdeaDetail | null> {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // The profiles RLS policy returns exactly the caller's row, so this is the
+  // current user's internal id (app_uid) without trusting client input.
+  const { data: me } = await supabase.from("profiles").select("id").maybeSingle();
 
   const { data: idea } = await supabase
     .from("ideas")
@@ -175,12 +190,12 @@ export async function getIdeaDetail(ideaId: string): Promise<IdeaDetail | null> 
         .select("*")
         .eq("idea_id", ideaId)
         .order("created_at", { ascending: false }),
-      user
+      me
         ? supabase
             .from("idea_signals")
             .select("id")
             .eq("idea_id", ideaId)
-            .eq("user_id", user.id)
+            .eq("user_id", me.id)
             .eq("kind", "star")
             .maybeSingle()
         : Promise.resolve({ data: null }),

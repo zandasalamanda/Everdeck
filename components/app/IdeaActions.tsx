@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Check, Copy, FileText, Loader2, Lock, Star } from "lucide-react";
 
 import { FUNCTIONS_URL } from "@/lib/publicConfig";
-import { createClient } from "@/lib/supabase/client";
+import { useSupabase } from "@/lib/supabase/browser";
 import type { Idea, LandingPrompt } from "@/lib/types";
 
 interface IdeaActionsProps {
   idea: Idea;
-  accountId: string;
   starred: boolean;
   landingPrompts: LandingPrompt[];
   canGenerate: boolean;
@@ -28,12 +28,13 @@ function formatDate(iso: string): string {
 
 export default function IdeaActions({
   idea,
-  accountId,
   starred,
   landingPrompts,
   canGenerate,
 }: IdeaActionsProps) {
   const router = useRouter();
+  const supabase = useSupabase();
+  const { getToken } = useAuth();
 
   const [isStarred, setIsStarred] = useState(starred);
   const [starBusy, setStarBusy] = useState(false);
@@ -48,42 +49,23 @@ export default function IdeaActions({
   async function toggleStar() {
     setStarBusy(true);
     setError(null);
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
+
+    // Optimistically flip; revert if the RPC fails.
+    const previous = isStarred;
+    setIsStarred(!previous);
+
+    const { data, error: rpcError } = await supabase.rpc("toggle_star", {
+      p_idea_id: idea.id,
+    });
+
+    if (rpcError) {
+      setIsStarred(previous);
+      setError(rpcError.message);
       setStarBusy(false);
-      setError("You need to be signed in to star ideas.");
       return;
     }
 
-    if (isStarred) {
-      const { error: deleteError } = await supabase
-        .from("idea_signals")
-        .delete()
-        .eq("idea_id", idea.id)
-        .eq("user_id", user.id)
-        .eq("kind", "star");
-      if (deleteError) {
-        setError(deleteError.message);
-      } else {
-        setIsStarred(false);
-      }
-    } else {
-      const { error: insertError } = await supabase.from("idea_signals").insert({
-        account_id: accountId,
-        idea_id: idea.id,
-        user_id: user.id,
-        kind: "star",
-      });
-      if (insertError) {
-        setError(insertError.message);
-      } else {
-        setIsStarred(true);
-      }
-    }
-
+    setIsStarred(data === true);
     setStarBusy(false);
     router.refresh();
   }
@@ -91,7 +73,6 @@ export default function IdeaActions({
   async function generatePrompt() {
     setGenerating(true);
     setError(null);
-    const supabase = createClient();
 
     const { error: rpcError } = await supabase.rpc("request_landing_prompt", {
       p_idea_id: idea.id,
@@ -107,14 +88,12 @@ export default function IdeaActions({
     }
 
     // Drain the job immediately, then give the worker a moment to finish.
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
+    const token = await getToken();
+    if (token) {
       try {
         await fetch(`${FUNCTIONS_URL}/worker?task=tick`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${session.access_token}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
       } catch {
         // Best-effort: the worker also runs on a schedule.

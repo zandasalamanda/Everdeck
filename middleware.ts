@@ -1,54 +1,28 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-type CookieToSet = { name: string; value: string; options: CookieOptions };
+// Next.js 15 → the middleware file is `middleware.ts` (Clerk's `proxy.ts`
+// convention is Next 16+). Clerk protects the product routes; the marketing
+// site and auth pages stay public.
+const isProtected = createRouteMatcher(["/app(.*)"]);
 
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/publicConfig";
-
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
-
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet: CookieToSet[]) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value),
-        );
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        );
-      },
-    },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const isAppRoute = request.nextUrl.pathname.startsWith("/app");
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
-
-  if (isAppRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(url);
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtected(req)) {
+    const { userId } = await auth();
+    if (!userId) {
+      const signIn = new URL("/sign-in", req.url);
+      signIn.searchParams.set("redirect_url", req.nextUrl.pathname);
+      return NextResponse.redirect(signIn);
+    }
   }
-
-  if (isAuthRoute && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/app";
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
-
-  return response;
-}
+});
 
 export const config = {
-  matcher: ["/app/:path*", "/login"],
+  matcher: [
+    // Skip Next internals and static files unless in search params
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Always run for Clerk's auto-proxy path and API routes
+    "/__clerk/:path*",
+    "/(api|trpc)(.*)",
+  ],
 };

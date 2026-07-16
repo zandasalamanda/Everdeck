@@ -11,7 +11,7 @@ const nf = new Intl.NumberFormat("en-US");
 
 export default async function UsagePage() {
   const ws = await getWorkspace();
-  if (!ws) redirect("/login");
+  if (!ws) redirect("/sign-in");
 
   const usage = (await getUsage(ws.account.id)).sort(
     (a, b) => b.requests - a.requests,

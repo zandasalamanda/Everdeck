@@ -15,7 +15,7 @@ const PLAN_COPY: Record<string, { blurb: string; price: string }> = {
 
 export default async function BillingPage() {
   const ws = await getWorkspace();
-  if (!ws) redirect("/login");
+  if (!ws) redirect("/sign-in");
 
   const supabase = createClient();
   const { data: plans } = await supabase

@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Lock, Play } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/client";
+import { useSupabase } from "@/lib/supabase/browser";
 import { FUNCTIONS_URL } from "@/lib/publicConfig";
 import type { RunMode } from "@/lib/types";
 
@@ -40,6 +41,8 @@ interface StartRunFormProps {
 
 export default function StartRunForm({ accountId, engineAllowed }: StartRunFormProps) {
   const router = useRouter();
+  const supabase = useSupabase();
+  const { getToken } = useAuth();
   const [mode, setMode] = useState<RunMode>("directed");
   const [market, setMarket] = useState("");
   const [busy, setBusy] = useState(false);
@@ -69,7 +72,6 @@ export default function StartRunForm({ accountId, engineAllowed }: StartRunFormP
     setError(null);
     setProgress("Queueing the run…");
 
-    const supabase = createClient();
     try {
       const { error: rpcError } = await supabase.rpc("start_run", {
         p_account_id: accountId,
@@ -85,10 +87,7 @@ export default function StartRunForm({ accountId, engineAllowed }: StartRunFormP
       // Show the queued run right away while the engine drains.
       router.refresh();
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token ?? "";
+      const token = await getToken();
 
       const tick = async () => {
         try {

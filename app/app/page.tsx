@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function TodaysDeckPage() {
   const ws = await getWorkspace();
-  if (!ws) redirect("/login");
+  if (!ws) redirect("/sign-in");
 
   const todays = await getTodaysDeck(ws.account.id);
   const ideas = todays.length > 0 ? todays : await getRecentIdeas(ws.account.id);

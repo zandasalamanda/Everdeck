@@ -27,7 +27,7 @@ export default function FinalCta() {
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <a
-              href="#pricing"
+              href="/sign-up"
               className="bg-iridescent rounded-full px-6 py-2.5 text-sm font-medium text-ink shadow-card hover:shadow-glow"
             >
               Start free

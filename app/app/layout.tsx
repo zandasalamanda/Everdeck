@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { UserButton } from "@clerk/nextjs";
 import { Layers, Map, Activity, CreditCard, Gauge } from "lucide-react";
 
 import Logo from "@/components/marketing/Logo";
@@ -17,7 +18,7 @@ const NAV = [
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const ws = await getWorkspace();
-  if (!ws) redirect("/login");
+  if (!ws) redirect("/sign-in");
 
   return (
     <div className="flex min-h-screen bg-carbon text-cloud">
@@ -54,7 +55,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               )}
             </div>
           </div>
-          <SignOutButton />
+          <div className="flex items-center gap-2">
+            <UserButton />
+            <SignOutButton />
+          </div>
         </div>
       </aside>
 

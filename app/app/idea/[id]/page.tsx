@@ -26,9 +26,14 @@ const TIER_DOT: Record<Tier, string> = {
   low: "bg-white/40",
 };
 
-export default async function IdeaPage({ params }: { params: { id: string } }) {
-  const [ws, detail] = await Promise.all([getWorkspace(), getIdeaDetail(params.id)]);
-  if (!ws) redirect("/login");
+export default async function IdeaPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const [ws, detail] = await Promise.all([getWorkspace(), getIdeaDetail(id)]);
+  if (!ws) redirect("/sign-in");
   if (!detail) notFound();
 
   const { idea, nodeLabel, painPoints, siblings, assessments, landingPrompts, starred } =
@@ -232,7 +237,6 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
 
         <IdeaActions
           idea={idea}
-          accountId={ws.account.id}
           starred={starred}
           landingPrompts={landingPrompts}
           canGenerate={ws.plan.landing_prompts}

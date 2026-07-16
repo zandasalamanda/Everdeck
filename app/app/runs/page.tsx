@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Runs — Everdeck" };
 
 export default async function RunsPage() {
   const ws = await getWorkspace();
-  if (!ws) redirect("/login");
+  if (!ws) redirect("/sign-in");
 
   const runs = await getRuns(ws.account.id);
 

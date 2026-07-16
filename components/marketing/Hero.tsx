@@ -250,7 +250,7 @@ export default function Hero() {
 
         <div className="animate-fade-up [animation-delay:560ms] mt-4 sm:mt-5 flex flex-wrap items-center justify-center gap-3">
           <a
-            href="#pricing"
+            href="/sign-up"
             className="bg-iridescent text-ink text-sm font-medium px-6 py-2.5 rounded-full shadow-card hover:shadow-glow"
           >
             Start free

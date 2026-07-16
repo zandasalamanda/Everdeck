@@ -13,9 +13,10 @@
 import Stripe from "npm:stripe@17";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+import { bearer, verifyClerkJwt } from "../_shared/clerk.ts";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 const PRICE_IDS: Record<string, string | undefined> = {
   pro: Deno.env.get("STRIPE_PRICE_PRO"),
@@ -30,20 +31,32 @@ const cors = {
 };
 
 async function callerAccount(req: Request) {
-  const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const jwt = bearer(req);
   if (!jwt) return null;
-  const anonClient = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
-  const { data, error } = await anonClient.auth.getUser(jwt);
-  if (error || !data.user) return null;
+  const claims = await verifyClerkJwt(jwt);
+  if (!claims) return null;
+
+  // Map the verified Clerk user → internal profile → account.
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("id, email")
+    .eq("clerk_user_id", claims.sub)
+    .maybeSingle();
+  if (!profile) return null;
 
   const { data: membership } = await admin
     .from("account_members")
     .select("account_id")
-    .eq("user_id", data.user.id)
+    .eq("user_id", profile.id)
     .limit(1)
     .single();
   if (!membership) return null;
-  return { userId: data.user.id, email: data.user.email ?? "", accountId: membership.account_id };
+
+  return {
+    userId: profile.id,
+    email: claims.email ?? profile.email ?? "",
+    accountId: membership.account_id,
+  };
 }
 
 Deno.serve(async (req: Request) => {

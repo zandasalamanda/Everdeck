@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function MapPage() {
   const ws = await getWorkspace();
-  if (!ws) redirect("/login");
+  if (!ws) redirect("/sign-in");
 
   const { markets, nodes, ideas } = await getMapData(ws.account.id);
 
