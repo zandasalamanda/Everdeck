@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutGrid, Mailbox, Radar, Gauge, CreditCard } from "lucide-react";
+import { LayoutGrid, Mailbox, Radar, MapPin, Gauge, CreditCard } from "lucide-react";
 
 import NavChip from "@/components/app/NavChip";
 
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/app", label: "Prospects", icon: LayoutGrid, exact: true },
   { href: "/app/dock", label: "Outreach dock", icon: Mailbox, exact: false },
   { href: "/app/hunts", label: "Hunts", icon: Radar, exact: false },
+  { href: "/app/territories", label: "Territories", icon: MapPin, exact: false },
   { href: "/app/usage", label: "Usage", icon: Gauge, exact: false },
   { href: "/app/billing", label: "Plan", icon: CreditCard, exact: false },
 ];

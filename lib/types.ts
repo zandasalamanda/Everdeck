@@ -94,6 +94,17 @@ export interface Prospect {
   reason: string | null;
   status: ProspectStatus;
   grounding: Grounding;
+  deal_value: number | null;
+  created_at: string;
+}
+
+/** A claimed niche + city that the daily cron auto-hunts every morning. */
+export interface Territory {
+  id: string;
+  account_id: string;
+  business_type: string;
+  location: string;
+  active: boolean;
   created_at: string;
 }
 

@@ -101,7 +101,11 @@ export default async function ProspectPage({ params }: { params: Promise<{ id: s
 
       {/* Pipeline control */}
       <div className="mt-6">
-        <ProspectStatusBar prospectId={prospect.id} status={prospect.status} />
+        <ProspectStatusBar
+          prospectId={prospect.id}
+          status={prospect.status}
+          dealValue={prospect.deal_value}
+        />
       </div>
 
       {/* Before / After — the emotional centerpiece */}

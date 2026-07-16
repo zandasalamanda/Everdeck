@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Radar } from "lucide-react";
+import { Radar, Trophy } from "lucide-react";
 
 import { TierLegend } from "@/components/app/badges";
 import ProspectCard from "@/components/app/ProspectCard";
@@ -9,6 +9,7 @@ import {
   getPursueUsage,
   getRecentProspects,
   getTodaysProspects,
+  getWinsSummary,
   getWorkspace,
 } from "@/lib/data";
 
@@ -21,10 +22,16 @@ export default async function ProspectsPage() {
   if (!ws) redirect("/sign-in");
 
   const todays = await getTodaysProspects(ws.account.id);
-  const [fallback, usage] = await Promise.all([
+  const [fallback, usage, wins] = await Promise.all([
     todays.length ? Promise.resolve(todays) : getRecentProspects(ws.account.id),
     getPursueUsage(),
+    getWinsSummary(ws.account.id),
   ]);
+  const wonRevenue = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(wins.revenue);
   // Highest-opportunity first — no-website / high-opportunity leads lead the deck.
   const prospects = [...fallback].sort((a, b) => b.opportunity_score - a.opportunity_score);
 
@@ -45,6 +52,19 @@ export default async function ProspectsPage() {
         </div>
         <div className="flex flex-col items-end gap-2">
           <TierLegend />
+          {wins.count > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint ring-1 ring-mint/20">
+              <Trophy className="h-3 w-3" aria-hidden />
+              {wins.count} won
+              {wins.revenue > 0 && (
+                <>
+                  {" · "}
+                  <span className="tabular-nums">{wonRevenue}</span>
+                </>
+              )}{" "}
+              this month
+            </span>
+          )}
           {usage && (
             <span className="text-[11px] tabular-nums text-white/35">
               {usage.used} / {usage.allowed} pursues this month

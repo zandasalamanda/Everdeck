@@ -15,6 +15,7 @@ import type {
   PursueUsage,
   Run,
   Subscription,
+  Territory,
 } from "@/lib/types";
 
 export interface Workspace {
@@ -219,6 +220,39 @@ export async function getUsage(accountId: string): Promise<UsageSummary[]> {
     byProvider.set(row.provider, cur);
   }
   return [...byProvider.values()];
+}
+
+/** The account's claimed territories — newest first. */
+export async function getTerritories(accountId: string): Promise<Territory[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("territories")
+    .select("*")
+    .eq("account_id", accountId)
+    .order("created_at", { ascending: false });
+  return (data ?? []) as Territory[];
+}
+
+export interface WinsSummary {
+  count: number;
+  revenue: number;
+}
+
+/** Won deals this calendar month: how many, and the total booked deal value. */
+export async function getWinsSummary(accountId: string): Promise<WinsSummary> {
+  const supabase = createClient();
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const { data } = await supabase
+    .from("prospects")
+    .select("deal_value")
+    .eq("account_id", accountId)
+    .eq("status", "won")
+    .gte("created_at", monthStart);
+
+  const rows = (data ?? []) as { deal_value: number | null }[];
+  const revenue = rows.reduce((sum, r) => sum + (Number(r.deal_value) || 0), 0);
+  return { count: rows.length, revenue };
 }
 
 /** This month's pursue budget — how many "give the order" calls are left. */
