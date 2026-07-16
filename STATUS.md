@@ -1,12 +1,14 @@
 # STATUS.md — Everdeck, built while you were away
 
-_Last updated: 2026-07-15 late evening. Everything below was verified live before writing._
+_Last updated: 2026-07-16. Auth is now **Clerk** (migrated from Supabase Auth). Everything below was verified live._
 
 ## Open it
 
 - **Live app (production):** https://everdeck-psi.vercel.app
-- **Sign in:** `demo@everdeck.app` / `19aceabb7884c0abce` — seeded, confirmed, on the **founder** plan (sandbox), with two completed pipeline runs so the map and deck are already populated.
-- **Stripe test card** (once Stripe keys are wired; sandbox billing needs no card): `4242 4242 4242 4242`, any future expiry, any CVC.
+- **Sign in:** click **Sign up** in the nav → **Continue with Google** (one click, no email) or email+password. On first sign-in your workspace auto-provisions (free plan). Verified end-to-end in production: sign-up → provision → a directed run produced 5 scored ideas.
+- **Auth instance:** dedicated Clerk `alert-oarfish-38` (registered as the Supabase third-party provider). Keys are in Vercel env + gitignored `.env.local`, never committed.
+- **Old Supabase `demo@everdeck.app` login no longer works** (Clerk replaced it). Its 100-idea demo deck still exists in the DB, orphaned — tell me your Clerk user id after you sign in and I'll reassign that deck to you.
+- **Stripe test card** (once TEST keys are wired; sandbox billing needs no card): `4242 4242 4242 4242`.
 
 ## What works right now (exact steps)
 
