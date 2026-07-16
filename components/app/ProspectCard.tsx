@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Globe } from "lucide-react";
 
 import { GroundingBadge, StatusBadge, TierBadge } from "@/components/app/badges";
 import type { Prospect } from "@/lib/types";
@@ -34,13 +34,18 @@ export default function ProspectCard({ prospect: p }: { prospect: Prospect }) {
               className="pointer-events-none absolute inset-0 bg-gradient-to-t from-carbon-panel/70 via-transparent to-transparent"
             />
           </>
-        ) : (
+        ) : !p.has_website ? (
           <div className="relative flex h-full w-full items-center justify-center">
             <div
               aria-hidden
               className="pointer-events-none absolute h-24 w-24 rounded-full bg-lilac/20 blur-2xl"
             />
             <span className="relative text-[13px] text-white/50">No website</span>
+          </div>
+        ) : (
+          <div className="relative flex h-full w-full flex-col items-center justify-center gap-1.5 text-white/40">
+            <Globe className="h-6 w-6" />
+            <span className="text-[12px]">Current site</span>
           </div>
         )}
 

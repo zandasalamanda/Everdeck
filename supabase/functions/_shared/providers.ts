@@ -87,14 +87,16 @@ export async function auditSite(website: string | null): Promise<SiteAudit> {
   }
 
   if (AUDIT_PROVIDER() === "mock") {
-    // Deterministic mock audit derived from the URL.
+    // Deterministic mock audit derived from the URL. No screenshot — the mock
+    // domains aren't real, so a live screenshot service would 404. Real audits
+    // (AUDIT_PROVIDER=live) capture the actual site.
     const seed = [...website].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
     const score = 25 + (seed % 55); // 25-79
     const issues: string[] = [];
     if (score < 50) issues.push("Slow on mobile", "No SSL / mixed content");
     if (score < 65) issues.push("Not mobile-responsive");
     issues.push("Outdated design");
-    return { has_website: true, score, screenshot_url: screenshotFor(website), contact_email: null, issues };
+    return { has_website: true, score, screenshot_url: null, contact_email: null, issues };
   }
 
   // LIVE: fetch the page (keyless) for email + basic signals, PageSpeed if key.

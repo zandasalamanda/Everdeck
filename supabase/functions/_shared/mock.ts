@@ -14,27 +14,31 @@ function hash(s: string): number {
 }
 
 const FIRST = ["Summit", "Cedar", "Bluebird", "Ironwood", "Harbor", "Maple", "Vista", "Copper", "Willow", "Granite", "Riverside", "Oakhaven"];
-const LAST_BY_TYPE: Record<string, string[]> = {
-  default: ["Group", "Co.", "& Sons", "Studio", "Works", "Collective", "Partners", "Shop"],
-};
+const SUFFIXES = ["Group", "Co.", "& Sons", "Studio", "Collective", "Partners", "LLC", "House"];
 const STREETS = ["Main St", "Oak Ave", "2nd St", "Commerce Dr", "Elm St", "Park Blvd", "Market St", "Cedar Ln"];
+
+function titleCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 /** A realistic list of local businesses; ~40% have no website, the rest weak. */
 export function mockBusinesses(type: string, location: string, limit: number): Business[] {
   const seed = hash(`${type}|${location}`);
-  const singular = type.replace(/s$/, "");
+  const singular = titleCase(type.replace(/s\b/, ""));
   const out: Business[] = [];
   for (let i = 0; i < limit; i++) {
+    // Unsigned shifts throughout — signed >> on a uint32 > 2^31 goes negative
+    // and produced negative (undefined) array indices.
     const s = (seed + i * 2654435761) >>> 0;
-    const name = `${FIRST[s % FIRST.length]} ${singular[0].toUpperCase() + singular.slice(1)} ${LAST_BY_TYPE.default[(s >> 4) % LAST_BY_TYPE.default.length]}`;
+    const name = `${FIRST[s % FIRST.length]} ${singular} ${SUFFIXES[(s >>> 4) % SUFFIXES.length]}`;
     const noSite = s % 5 < 2; // ~40% no website
     const domain = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
     out.push({
       place_id: `mock_${s.toString(16)}`,
       name,
-      address: `${100 + (s % 899)} ${STREETS[s % STREETS.length]}, ${location}`,
-      phone: `(${200 + (s % 700)}) ${100 + (s % 900)}-${1000 + (s % 9000)}`,
-      website_url: noSite ? null : `http://www.${domain}.com`,
+      address: `${100 + (s % 899)} ${STREETS[(s >>> 8) % STREETS.length]}, ${location}`,
+      phone: `(${200 + (s % 700)}) ${100 + ((s >>> 12) % 900)}-${1000 + ((s >>> 16) % 9000)}`,
+      website_url: noSite ? null : `http://www.${domain}.example`,
       rating: 3.4 + ((s % 16) / 10),
     });
   }
