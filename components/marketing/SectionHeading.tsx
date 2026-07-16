@@ -1,4 +1,6 @@
-import { useReveal } from "../lib/useReveal";
+"use client";
+
+import { useReveal } from "@/lib/useReveal";
 
 export default function SectionHeading({
   eyebrow,

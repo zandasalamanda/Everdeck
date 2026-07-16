@@ -1,7 +1,9 @@
+"use client";
+
 import { ArrowUp } from "lucide-react";
 
-import SectionHeading from "../SectionHeading";
-import { useReveal } from "../../lib/useReveal";
+import SectionHeading from "@/components/marketing/SectionHeading";
+import { useReveal } from "@/lib/useReveal";
 
 /** Step 1: a miniature of the hero search pill. */
 function TypeVisual() {

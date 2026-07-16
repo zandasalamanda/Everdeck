@@ -1,7 +1,9 @@
+"use client";
+
 import { Check } from "lucide-react";
 
-import SectionHeading from "../SectionHeading";
-import { useReveal } from "../../lib/useReveal";
+import SectionHeading from "@/components/marketing/SectionHeading";
+import { useReveal } from "@/lib/useReveal";
 
 const PLANS = [
   {

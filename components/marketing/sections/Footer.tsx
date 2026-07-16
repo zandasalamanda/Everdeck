@@ -1,4 +1,6 @@
-import Logo from "../Logo";
+"use client";
+
+import Logo from "@/components/marketing/Logo";
 
 const COLUMNS = [
   {

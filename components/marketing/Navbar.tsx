@@ -1,7 +1,9 @@
+"use client";
+
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
-import Logo from "./Logo";
+import Logo from "@/components/marketing/Logo";
 
 const NAV_LINKS = [
   { label: "How it works", href: "#how-it-works" },

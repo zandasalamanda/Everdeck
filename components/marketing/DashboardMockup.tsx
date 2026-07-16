@@ -14,7 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import Logo from "./Logo";
+import Logo from "@/components/marketing/Logo";
 
 const SIDEBAR_NAV = [
   { label: "Explore", icon: Compass, active: true },

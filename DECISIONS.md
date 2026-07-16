@@ -1,0 +1,15 @@
+# DECISIONS.md — Everdeck product build (2026-07-15)
+
+Reversible-by-default calls made without blocking. Newest last.
+
+1. **Nested git repo.** `everdeck/` is gitignored by the parent KairoApp repo, so it got its own repo (`git init`), snapshot commit of the Vite marketing site on `main`, work on `feat/product-build`. No remote exists — commits are local (see QUESTIONS #1).
+2. **Supabase**: created project `everdeck` (`fxrnuoahfzzdsepwvzux`) in org `zanderleon.dev` (the only org), region `us-east-2` (matches your existing `kairo` project), confirmed cost **$0/month** (free tier).
+3. **Vercel**: team `app-work` (`team_OSYLJEKlBvsmMIBkyVdI8QiL`, the only team). Deploys go through the connector's file-tree deploy (no Vercel CLI on this machine).
+4. **Privileged runtime lives in Supabase Edge Functions, not Vercel.** The Vercel connector cannot set env vars/secrets, so the Next.js app on Vercel uses ONLY the public anon key + user JWT, with RLS doing all enforcement. The job worker, cron tick, and Stripe webhook run as Supabase Edge Functions, which get `SUPABASE_SERVICE_ROLE_KEY` injected automatically — the service key never exists in the repo or on Vercel.
+5. **`NEXT_PUBLIC_SUPABASE_URL` + anon key are committed in `lib/publicConfig.ts`.** The anon key is public by design (it is shipped to every browser anyway); RLS is the security boundary. Env vars override when present.
+6. **Cron = pg_cron + pg_net → worker Edge Function**, replacing the master prompt's Vercel Cron (hobby cron is limited to daily anyway and we cannot set the secrets Vercel-side). Same behavior: one daily tick enqueues the autonomous batch; subsequent ticks drain.
+7. **Stripe**: the Stripe connector disconnected mid-session and no local keys exist. Decision: implement the complete test-mode integration (Checkout, Portal, signature-verified webhook → `subscriptions`) behind `STRIPE_*` env vars, plus an explicitly labeled **billing sandbox** fallback that simulates checkout and writes the same `subscriptions` rows, so gating is real end-to-end today. Flipping to real test mode = paste keys + run the documented setup script.
+8. **Gemini**: no API key available here → `LLM_PROVIDER=mock` everywhere (the master prompt mandates mock-by-default anyway). The provider seam (`supabase/functions/_shared/llm.ts`) reads `GEMINI_API_KEY` from Edge Function secrets; models per stage are config. Real-call validation is deferred to you (QUESTIONS #3).
+9. **Next.js scaffold is manual** (App Router, TS strict, Tailwind 3) so the ported marketing components keep their exact styling. Marketing page = `/` public route; product = `/app/*` behind auth.
+10. **Reddit path**: no Reddit/Google-CSE credentials available → Stage 2 ships with the required query builder + a clearly-labeled deterministic synthetic-discussions provider. Provider seam accepts `reddit` once creds exist. Every idea carries `grounding: synthetic|reddit` surfaced in the UI.
+11. **Plan prices (test placeholders)**: Free $0 / Pro $49/mo / Founder $199/mo. Flagged in QUESTIONS #2 for your real pricing.

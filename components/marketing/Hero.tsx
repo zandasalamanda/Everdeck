@@ -1,3 +1,5 @@
+"use client";
+
 import {
   useEffect,
   useLayoutEffect,
@@ -7,8 +9,8 @@ import {
 } from "react";
 import { ArrowUp, Sparkles } from "lucide-react";
 
-import Navbar from "./Navbar";
-import DashboardMockup from "./DashboardMockup";
+import Navbar from "@/components/marketing/Navbar";
+import DashboardMockup from "@/components/marketing/DashboardMockup";
 
 const BACKGROUND_URL =
   "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260611_133301_d5f2a94a-b22e-4e4a-a6b6-eacdddf1f5b0.png&w=1280&q=85";

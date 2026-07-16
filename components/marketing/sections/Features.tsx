@@ -1,9 +1,11 @@
+"use client";
+
 import { useId } from "react";
 import { Bell } from "lucide-react";
 
-import Logo from "../Logo";
-import SectionHeading from "../SectionHeading";
-import { useReveal } from "../../lib/useReveal";
+import Logo from "@/components/marketing/Logo";
+import SectionHeading from "@/components/marketing/SectionHeading";
+import { useReveal } from "@/lib/useReveal";
 
 const FACTORS = [
   { label: "Demand", value: 84 },
