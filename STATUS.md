@@ -1,9 +1,18 @@
 # STATUS.md — Everdeck
 
-_Last updated: 2026-07-16 (overnight). **Everdeck is now a web-dev lead machine** —
+_Last updated: 2026-07-16. **Everdeck is now a web-dev lead machine** —
 it finds local businesses that need a website, builds each a personalized mockup, and
-drafts outreach you review and send yourself. Auth is Clerk. To flip it from free mock
-data to real businesses + real mockups, see **SETUP.md** (two keys, two switches)._
+drafts outreach you review and send yourself. Auth is Clerk._
+
+> **REAL MODE IS LIVE.** Google Places + Gemini keys are wired (stored in Supabase
+> Vault, read by the worker at runtime — no Edge Function secret store was reachable,
+> so keys never touch the repo or Vercel). Verified on prod: a real "coffee shops /
+> Portland, OR" hunt discovered real businesses, captured real screenshots + a real
+> contact email, and generated personalized ~16KB HTML mockups + tailored outreach.
+> Free-tier Gemini is rate-limited (~10 rpm) so larger hunts drain over a few minutes
+> via the retry queue; a paid key removes this (and the training-data concern — see
+> SETUP.md). To revert to $0 mock, delete the Vault secrets `GEMINI_API_KEY` /
+> `GOOGLE_MAPS_API_KEY`.
 
 > **The pivot in one line:** market → **hunt**, idea → **prospect**, pipeline →
 > **discover → audit → generate mockup + outreach**. It was a repoint of the existing
@@ -35,8 +44,8 @@ data to real businesses + real mockups, see **SETUP.md** (two keys, two switches
 
 | Thing | State | Why / how to flip |
 |---|---|---|
-| LLM | **Mock provider** (deterministic, labeled `synthetic`) | No Gemini key was available; zero real calls made. Flip: set `LLM_PROVIDER=gemini` + `GEMINI_API_KEY` in Supabase Edge Function secrets. Seam, rate limiting (~14 rpm), 429 backoff, and per-stage model config are already live. |
-| Reddit data | **Synthetic discussions** (labeled in UI via grounding badges) | No Reddit/CSE credentials. The A2 query builder + provider seam exist; `DISCUSSION_PROVIDER=reddit` once creds + fetcher land. |
+| LLM (mockups + outreach) | **LIVE — Gemini** (`gemini-flash-latest`) | Key in Vault. Structured-output schema forces valid JSON; 32k output budget clears thinking-token starvation; 429 backoff + 6.5s gap for free-tier limits. Revert to mock by deleting the Vault `GEMINI_API_KEY`. |
+| Business discovery + audit | **LIVE — Google Places (New) + PageSpeed + thum.io** | Key in Vault. Places Text Search (Pro SKU field mask), keyless thum.io screenshots, keyless public-email extraction (tracking-DSN filtered), best-effort PageSpeed. Revert by deleting the Vault `GOOGLE_MAPS_API_KEY`. |
 | Stripe | **Sandbox billing** (labeled banner in UI) | Stripe connector was down and no keys exist locally. Checkout/Portal/webhook code is deployed and signature-verified — see go-live below. |
 | Email confirmations | Work, but redirect to localhost until you set Supabase Auth **Site URL** to the live URL (Dashboard → Auth → URL Configuration; no API for this). Password sign-in unaffected. |
 
