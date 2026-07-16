@@ -15,9 +15,9 @@ export default function Testimonial() {
           MB
         </div>
         <blockquote className="mt-6 text-xl leading-snug tracking-tight text-ink sm:text-2xl lg:text-3xl">
-          “Everdeck compressed a month of market research into{" "}
-          <em className="font-serif">a single morning</em>. I walked into the
-          pitch with the gap, the numbers, and the plan. It won.”
+          “I stopped cold-pitching and started showing up with the{" "}
+          <em className="font-serif">site already built</em>. Owners can't say no
+          to something they can already see. I booked three clients my first week.”
         </blockquote>
         <p className="mt-5 text-sm">
           <span className="font-medium text-ink">Maxwell Brohm</span>

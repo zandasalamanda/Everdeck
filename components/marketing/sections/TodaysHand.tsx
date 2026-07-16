@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, type CSSProperties } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Mail } from "lucide-react";
 
 import Logo from "@/components/marketing/Logo";
 import SectionHeading from "@/components/marketing/SectionHeading";
@@ -9,31 +9,37 @@ import { useReveal } from "@/lib/useReveal";
 
 const CARDS = [
   {
-    score: 86,
-    title: "Fall-alert pendant, one-time purchase",
-    body: "Seniors resent monthly fees. 68k searches a month for alert devices without subscriptions — nobody owns it.",
-    demand: "High",
-    competition: "Low",
-    effort: "Medium",
+    score: 92,
+    title: "Bright Smile Dental",
+    body: "No website at all — just a Google listing and a phone number.",
+    opener:
+      "Hi Bright Smile — I put together a modern site for your practice. Mind if I send it over?",
+    opportunity: "High",
+    reach: "High",
+    effort: "Low",
     rotate: "-6deg",
     y: "12px",
   },
   {
-    score: 81,
-    title: "Med reminders with family escalation",
-    body: "Caregivers want alerts that reach the family when a dose is missed. Existing apps stop at the patient's phone.",
-    demand: "High",
-    competition: "Low",
+    score: 84,
+    title: "Cedar Family Dentistry",
+    body: "Slow, not mobile-friendly, and there's no way to book online.",
+    opener:
+      "Hi Cedar Family — I redesigned your homepage to load fast on phones. Want a look?",
+    opportunity: "High",
+    reach: "Medium",
     effort: "Low",
     rotate: "0deg",
     y: "0px",
   },
   {
-    score: 78,
-    title: "Home safety audit marketplace",
-    body: "Occupational therapists already do room-by-room audits. No marketplace connects them to worried families.",
-    demand: "Medium",
-    competition: "Low",
+    score: 79,
+    title: "Downtown Ortho Studio",
+    body: "Dated 2011 design with a contact form that no longer works.",
+    opener:
+      "Hi Downtown Ortho — I rebuilt your site with a working booking form. Quick peek?",
+    opportunity: "Medium",
+    reach: "High",
     effort: "Medium",
     rotate: "6deg",
     y: "12px",
@@ -99,9 +105,9 @@ export default function TodaysHand() {
     >
       <SectionHeading
         dark
-        eyebrow="The deck"
-        title="A fresh hand, every morning"
-        sub="Dealt after every overnight scan — the day's highest-scoring ideas, reasoned and ready. This is today's hand for “senior health”."
+        eyebrow="The pitch"
+        title="A fresh hand of prospects, every morning"
+        sub="Dealt after every hunt — the day's best local businesses, each with a mockup built and an opener drafted. This is today's hand for “dentists in Austin, TX”."
       />
 
       <div
@@ -126,7 +132,7 @@ export default function TodaysHand() {
                 <div className="flex items-center gap-1.5 text-white/55">
                   <Logo className="h-3.5 w-3.5" />
                   <span className="text-[10px] uppercase tracking-[0.18em]">
-                    Idea No.{i + 1}
+                    Prospect No.{i + 1}
                   </span>
                 </div>
                 <ScoreRing score={card.score} />
@@ -139,11 +145,21 @@ export default function TodaysHand() {
                 {card.body}
               </p>
 
-              <dl className="mt-5 flex gap-2">
+              <div className="mt-4 rounded-lg bg-white/[0.04] p-3 ring-1 ring-white/5">
+                <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-wider text-white/45">
+                  <Mail className="h-3 w-3" />
+                  Outreach opener
+                </div>
+                <p className="mt-1.5 text-[12px] leading-relaxed text-white/70">
+                  “{card.opener}”
+                </p>
+              </div>
+
+              <dl className="mt-4 flex gap-2">
                 {(
                   [
-                    ["Demand", card.demand],
-                    ["Comp.", card.competition],
+                    ["Opp.", card.opportunity],
+                    ["Reach", card.reach],
                     ["Effort", card.effort],
                   ] as const
                 ).map(([label, value]) => (
@@ -167,7 +183,7 @@ export default function TodaysHand() {
                 href="#pricing"
                 className="mt-5 flex items-center justify-between rounded-full bg-white/[0.06] px-4 py-2 text-[12px] font-medium text-white/80 ring-1 ring-white/10 transition-colors hover:bg-white hover:text-ink"
               >
-                Open in Everdeck
+                Review the pitch
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </a>
             </div>
@@ -179,8 +195,8 @@ export default function TodaysHand() {
         ref={footnoteRef}
         className="reveal mx-auto mt-12 max-w-md text-center text-[13px] text-white/55"
       >
-        Cards you skip go back in the deck. Cards you keep become a build plan —
-        niche map, competitors, first steps.
+        Skip a prospect and it goes back in the deck. Keep one and you get the full
+        mockup and a drafted email — ready for you to review and send.
       </p>
     </section>
   );

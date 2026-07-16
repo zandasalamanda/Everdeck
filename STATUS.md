@@ -1,6 +1,14 @@
-# STATUS.md — Everdeck, built while you were away
+# STATUS.md — Everdeck
 
-_Last updated: 2026-07-16. Auth is now **Clerk** (migrated from Supabase Auth). Everything below was verified live._
+_Last updated: 2026-07-16 (overnight). **Everdeck is now a web-dev lead machine** —
+it finds local businesses that need a website, builds each a personalized mockup, and
+drafts outreach you review and send yourself. Auth is Clerk. To flip it from free mock
+data to real businesses + real mockups, see **SETUP.md** (two keys, two switches)._
+
+> **The pivot in one line:** market → **hunt**, idea → **prospect**, pipeline →
+> **discover → audit → generate mockup + outreach**. It was a repoint of the existing
+> engine, not a rebuild (~70% reuse). The sections below still describe the shared
+> infrastructure (auth, queue, billing); the product on top of it is the new one.
 
 ## Open it
 

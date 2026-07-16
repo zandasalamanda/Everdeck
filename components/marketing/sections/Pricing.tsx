@@ -10,12 +10,12 @@ const PLANS = [
     name: "Scout",
     price: "$0",
     period: "forever",
-    blurb: "For your first market.",
+    blurb: "For your first hunt.",
     features: [
-      "1 market",
-      "Weekly scan",
-      "3 scored ideas per scan",
-      "Niche map preview",
+      "1 hunt per day",
+      "10 prospects per hunt",
+      "Site audits & scores",
+      "Mockup preview",
     ],
     cta: "Start free",
     featured: false,
@@ -24,13 +24,13 @@ const PLANS = [
     name: "Founder",
     price: "$19",
     period: "per month",
-    blurb: "For picking a card and playing it.",
+    blurb: "For a full client pipeline.",
     features: [
-      "Unlimited markets",
-      "Daily scans + morning digest",
-      "Full scored deck & gap feed",
-      "Build plans on every card",
-      "CSV & Notion export",
+      "Unlimited hunts",
+      "Full prospect feed",
+      "Before/after mockup on every prospect",
+      "Outreach drafts + the dock",
+      "Export prospects to CSV",
     ],
     cta: "Go Founder",
     featured: true,
@@ -44,8 +44,8 @@ export default function Pricing() {
     <section id="pricing" className="scroll-mt-10 bg-white px-5 py-20 sm:py-28">
       <SectionHeading
         eyebrow="Pricing"
-        title="Free to scout. Cheap to found."
-        sub="No credit card required to start. Cancel anytime. Your deck stays until the period ends."
+        title="Free to try. Cheap to grow."
+        sub="No card to start. One hunt a day, free. Cancel anytime — your prospects stay until the period ends."
       />
 
       <div

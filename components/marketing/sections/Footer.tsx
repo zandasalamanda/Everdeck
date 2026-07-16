@@ -7,7 +7,7 @@ const COLUMNS = [
     heading: "Product",
     links: [
       { label: "How it works", href: "#how-it-works" },
-      { label: "The deck", href: "#deck" },
+      { label: "The pitch", href: "#deck" },
       { label: "Pricing", href: "#pricing" },
       { label: "FAQ", href: "#faq" },
     ],
@@ -38,7 +38,7 @@ export default function Footer() {
             <span className="font-medium tracking-tight">Everdeck</span>
           </a>
           <p className="mt-3 max-w-[220px] text-[13px] leading-relaxed text-white/60">
-            Find your market. Effortlessly.
+            Show up with the website already built.
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export default function Footer() {
 
       <div className="mx-auto mt-12 flex max-w-5xl items-center justify-between border-t border-white/10 pt-6 text-xs text-white/60">
         <span>© 2026 Everdeck</span>
-        <span>Scans land at 6:04 AM, your time.</span>
+        <span>New prospects land at 6:04 AM, your time.</span>
       </div>
     </footer>
   );

@@ -1,67 +1,86 @@
 "use client";
 
-import { ArrowUp } from "lucide-react";
+import { ArrowRight, ArrowUp, Send } from "lucide-react";
 
 import SectionHeading from "@/components/marketing/SectionHeading";
 import { useReveal } from "@/lib/useReveal";
 
-/** Step 1: a miniature of the hero search pill. */
-function TypeVisual() {
+/** Step 1: the hero's two-field search — a business type and a city. */
+function SearchVisual() {
   return (
-    <div className="flex items-center gap-2 rounded-full bg-white ring-1 ring-ink/10 shadow-sm pl-3.5 pr-1.5 py-1.5">
-      <span className="text-[12px] text-ink">senior health</span>
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink text-white">
+    <div className="flex items-center gap-2 rounded-full bg-white ring-1 ring-ink/10 shadow-sm py-1 pl-3.5 pr-1.5">
+      <span className="text-[12px] text-ink">dentists</span>
+      <span className="h-4 w-px bg-ink/15" />
+      <span className="text-[12px] text-ink">Austin</span>
+      <span className="ml-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-white">
         <ArrowUp className="h-3 w-3" />
       </span>
     </div>
   );
 }
 
-/** Step 2: a radar sweeping the market for signals. */
-function ScanVisual() {
+/** Step 2: their tired site, redrawn — before and after side by side. */
+function BeforeAfterVisual() {
   return (
-    <div className="relative h-24 w-24">
-      <span className="absolute inset-0 rounded-full ring-1 ring-ink/10" />
-      <span className="absolute inset-3 rounded-full ring-1 ring-ink/10" />
-      <span className="absolute inset-6 rounded-full ring-1 ring-ink/10" />
-      <span className="animate-spin-slow absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,rgba(14,14,16,0.1),transparent_75deg)]" />
-      <span className="absolute left-[68%] top-[26%] h-1.5 w-1.5 rounded-full bg-lilac" />
-      <span className="absolute left-[28%] top-[52%] h-1.5 w-1.5 rounded-full bg-sky" />
-      <span className="absolute left-[58%] top-[70%] h-1.5 w-1.5 rounded-full bg-mint" />
-      <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink" />
+    <div className="flex items-center gap-2.5">
+      {/* Before — a washed-out, dated site */}
+      <div className="w-[74px] overflow-hidden rounded-md bg-white ring-1 ring-ink/10 shadow-sm">
+        <div className="flex gap-0.5 bg-ink/[0.04] px-1.5 py-1">
+          <span className="h-1 w-1 rounded-full bg-ink/20" />
+          <span className="h-1 w-1 rounded-full bg-ink/15" />
+          <span className="h-1 w-1 rounded-full bg-ink/10" />
+        </div>
+        <div className="space-y-1 p-2 opacity-50">
+          <span className="block h-3 w-full rounded-sm bg-ink/15" />
+          <span className="block h-1 w-3/4 rounded-sm bg-ink/10" />
+          <span className="block h-1 w-1/2 rounded-sm bg-ink/10" />
+        </div>
+      </div>
+
+      <ArrowRight className="h-4 w-4 shrink-0 text-slate" />
+
+      {/* After — your design, iridescent hero */}
+      <div className="relative w-[74px] overflow-hidden rounded-md bg-white ring-1 ring-ink/10 shadow-sm">
+        <span className="animate-sweep pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+        <div className="flex gap-0.5 bg-ink/[0.04] px-1.5 py-1">
+          <span className="h-1 w-1 rounded-full bg-ink/20" />
+          <span className="h-1 w-1 rounded-full bg-ink/15" />
+          <span className="h-1 w-1 rounded-full bg-ink/10" />
+        </div>
+        <div className="space-y-1 p-2">
+          <span className="bg-iridescent block h-3 w-full rounded-sm" />
+          <span className="block h-1 w-3/4 rounded-sm bg-ink/15" />
+          <span className="block h-1 w-1/2 rounded-sm bg-ink/10" />
+        </div>
+      </div>
     </div>
   );
 }
 
-/** Step 3: a small fanned hand of scored cards. */
-function DeckVisual() {
+/** Step 3: the outreach dock — a drafted email waiting for your send. */
+function InboxVisual() {
   return (
-    <div className="relative h-24 w-32">
-      {[
-        { rotate: "-rotate-[10deg]", offset: "left-0 top-3", score: null },
-        { rotate: "rotate-[10deg]", offset: "right-0 top-3", score: null },
-        { rotate: "rotate-0", offset: "left-1/2 -translate-x-1/2 top-0", score: "86" },
-      ].map((card, i) => (
-        <div
-          key={i}
-          className={`absolute ${card.offset} ${card.rotate} h-[84px] w-16 rounded-lg bg-white ring-1 ring-ink/10 shadow-sm p-2`}
-        >
-          {card.score ? (
-            <>
-              <span className="bg-iridescent inline-block rounded-full px-1.5 py-0.5 text-[9px] font-medium text-ink">
-                {card.score}
-              </span>
-              <span className="mt-2 block h-1 w-10 rounded bg-ink/15" />
-              <span className="mt-1 block h-1 w-7 rounded bg-ink/10" />
-            </>
-          ) : (
-            <>
-              <span className="block h-1 w-8 rounded bg-ink/10" />
-              <span className="mt-1.5 block h-1 w-6 rounded bg-ink/[0.07]" />
-            </>
-          )}
+    <div className="w-full max-w-[192px] overflow-hidden rounded-lg bg-white ring-1 ring-ink/10 shadow-sm">
+      <div className="flex items-center justify-between border-b border-ink/5 px-2.5 py-1.5">
+        <span className="text-[10px] font-medium text-ink">Outreach dock</span>
+        <span className="rounded-full bg-ink/[0.06] px-1.5 py-0.5 text-[8px] text-slate">
+          Draft
+        </span>
+      </div>
+      <div className="px-2.5 py-2">
+        <div className="text-[10px] font-medium text-ink">Bright Smile Dental</div>
+        <div className="mt-1.5 space-y-1">
+          <span className="block h-1 w-full rounded-sm bg-ink/10" />
+          <span className="block h-1 w-2/3 rounded-sm bg-ink/10" />
         </div>
-      ))}
+        <div className="mt-2.5 flex items-center justify-end gap-1.5">
+          <span className="text-[8px] text-slate">Your inbox</span>
+          <span className="flex items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[9px] font-medium text-white">
+            <Send className="h-2.5 w-2.5" />
+            Send
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -69,21 +88,21 @@ function DeckVisual() {
 const STEPS = [
   {
     step: "01",
-    title: "Tell Everdeck a market",
-    body: "Type any space you're curious about: senior health, home coffee, sleep tech. That's the whole setup.",
-    visual: TypeVisual,
+    title: "Name a type and a city",
+    body: "Tell Everdeck who you want to reach and where — “dentists in Austin.” That's the whole setup.",
+    visual: SearchVisual,
   },
   {
     step: "02",
-    title: "It scans the market daily",
-    body: "Search demand, competitors, forums, reviews and pricing gaps, checked fresh every morning.",
-    visual: ScanVisual,
+    title: "It finds weak sites and redesigns them",
+    body: "Everdeck scans local businesses, flags the slow, dated and missing sites, then designs a better one for each.",
+    visual: BeforeAfterVisual,
   },
   {
     step: "03",
-    title: "You get a scored deck",
-    body: "Ideas ranked by demand, competition, and effort. Pick a card and start building.",
-    visual: DeckVisual,
+    title: "Review the draft and send",
+    body: "Open the dock, check the mockup and the outreach email, and send it from your own inbox.",
+    visual: InboxVisual,
   },
 ];
 
@@ -94,8 +113,8 @@ export default function HowItWorks() {
     <section id="how-it-works" className="scroll-mt-10 bg-cloud px-5 py-20 sm:py-28">
       <SectionHeading
         eyebrow="How it works"
-        title="Three steps from market to move"
-        sub="No setup. No spreadsheets. A scored plan on day one."
+        title="Three steps to a client-ready pitch"
+        sub="No lists to buy. No cold data. A designed website on day one."
       />
 
       <div

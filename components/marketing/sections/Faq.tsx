@@ -7,24 +7,24 @@ import { useReveal } from "@/lib/useReveal";
 
 const FAQS = [
   {
-    q: "Where does the data come from?",
-    a: "Search volume, marketplaces, forums and review sites — pulled fresh on every scan. Nothing is hand-curated or stale; the deck reflects what people asked for this week.",
+    q: "Does Everdeck send emails for me?",
+    a: "No. Everdeck drafts the outreach, but you review every email and send it yourself from your own inbox. Nothing goes out automatically — that keeps you in control and keeps your domain's reputation safe.",
   },
   {
-    q: "How are ideas scored?",
-    a: "Each idea gets a 0–100 score blending three inputs: demand (how many people want it), competition (who already serves it), and effort (how hard it is to launch). Every card shows all three, so you can overrule the blend.",
+    q: "Is cold outreach allowed?",
+    a: "It can be, if you do it right. Follow CAN-SPAM and your local rules: only contact businesses, be honest about who you are, and include a clear way to opt out. Everdeck helps you personalize a genuine offer — it is not a tool for blasting spam.",
+  },
+  {
+    q: "Where do the businesses come from?",
+    a: "Public sources — maps listings and local search for the type and city you name. Everdeck checks each one's website for speed, mobile and SSL, then flags the weakest as your best prospects.",
   },
   {
     q: "Do I need to know how to code?",
-    a: "No. Build plans include no-code paths where they exist, and effort scores account for them. Plenty of deck cards are service or marketplace ideas with no software at all.",
-  },
-  {
-    q: "Can I export my deck?",
-    a: "On the Founder plan — CSV and Notion, including scores, gap sources and the build plan for each card.",
+    a: "No — but Everdeck is built for people who sell websites. It hands you a mockup and a drafted email; you decide how you build and deliver the final site.",
   },
   {
     q: "Can I cancel anytime?",
-    a: "Yes, from settings in one click. Your deck stays available until the end of the billing period.",
+    a: "Yes, from settings in one click. Your prospects and mockups stay available until the end of the billing period.",
   },
 ];
 

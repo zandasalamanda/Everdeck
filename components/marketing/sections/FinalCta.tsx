@@ -20,10 +20,10 @@ export default function FinalCta() {
       >
         <div className="relative z-20 flex flex-col items-center px-6 pb-36 pt-16 text-center sm:pb-44 sm:pt-24">
           <h2 className="text-3xl font-normal leading-[1.08] tracking-tight text-ink sm:text-5xl">
-            Your market is out there.
+            Your next client is around the corner.
           </h2>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink/70 sm:text-base">
-            Name it, and Everdeck deals the first hand tomorrow morning.
+            Name a type and a city — Everdeck builds the first pitch by morning.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <a
@@ -40,7 +40,7 @@ export default function FinalCta() {
             </a>
           </div>
           <p className="mt-4 text-xs text-ink/70">
-            Free while scouting — no credit card required.
+            Free to try — no credit card required.
           </p>
         </div>
 

@@ -1,16 +1,16 @@
 "use client";
 
 import { useId } from "react";
-import { Bell } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 
 import Logo from "@/components/marketing/Logo";
 import SectionHeading from "@/components/marketing/SectionHeading";
 import { useReveal } from "@/lib/useReveal";
 
 const FACTORS = [
-  { label: "Demand", value: 84 },
-  { label: "Competition", value: 26 },
-  { label: "Effort", value: 38 },
+  { label: "Speed", value: 44 },
+  { label: "Mobile", value: 21 },
+  { label: "SSL", value: 12 },
 ];
 
 function ScoreGauge() {
@@ -45,51 +45,66 @@ function ScoreGauge() {
           strokeLinecap="round"
           stroke={`url(#${id})`}
           className="ring-fg"
-          style={{ "--score": 86 } as React.CSSProperties}
+          style={{ "--score": 34 } as React.CSSProperties}
         />
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-medium tabular-nums text-white">86</span>
+        <span className="text-2xl font-medium tabular-nums text-white">34</span>
         <span className="text-[9px] uppercase tracking-wider text-white/45">
-          score
+          site score
         </span>
       </span>
     </div>
   );
 }
 
-function NicheMapVisual() {
+function BeforeAfterVisual() {
   return (
-    <svg viewBox="0 0 240 96" className="h-24 w-full" aria-hidden="true">
-      <path
-        d="M32 48 C 72 48, 72 20, 112 20 M32 48 C 72 48, 72 48, 112 48 M32 48 C 72 48, 72 76, 112 76 M112 20 C 152 20, 152 12, 192 12 M112 20 C 152 20, 152 32, 192 32"
-        fill="none"
-        stroke="rgba(14,14,16,0.15)"
-        strokeWidth="1.5"
-      />
-      <circle cx="32" cy="48" r="5" fill="#0E0E10" />
-      <circle cx="112" cy="20" r="4" fill="white" stroke="rgba(14,14,16,0.25)" strokeWidth="1.5" />
-      <circle cx="112" cy="48" r="4" fill="white" stroke="rgba(14,14,16,0.25)" strokeWidth="1.5" />
-      <circle cx="112" cy="76" r="4" fill="white" stroke="rgba(14,14,16,0.25)" strokeWidth="1.5" />
-      <circle cx="192" cy="12" r="4" fill="white" stroke="rgba(14,14,16,0.25)" strokeWidth="1.5" />
-      <circle cx="192" cy="32" r="6" fill="#C9BBFF" />
-      <text x="204" y="36" fontSize="9" fill="#6A6A70">
-        Elder care
-      </text>
-      <text x="122" y="51" fontSize="9" fill="#6A6A70">
-        Mobility
-      </text>
-      <text x="122" y="80" fontSize="9" fill="#6A6A70">
-        Home safety
-      </text>
-    </svg>
+    <div className="flex items-center justify-center gap-3 px-2 py-3">
+      {/* Before — their tired site */}
+      <div className="flex-1 overflow-hidden rounded-md ring-1 ring-ink/10">
+        <div className="flex gap-1 bg-ink/[0.04] px-2 py-1.5">
+          <span className="h-1 w-1 rounded-full bg-ink/20" />
+          <span className="h-1 w-1 rounded-full bg-ink/15" />
+          <span className="h-1 w-1 rounded-full bg-ink/10" />
+        </div>
+        <div className="space-y-1.5 bg-white p-2.5 opacity-50">
+          <span className="block h-4 w-full rounded-sm bg-ink/15" />
+          <span className="block h-1.5 w-3/4 rounded-sm bg-ink/10" />
+          <span className="block h-1.5 w-1/2 rounded-sm bg-ink/10" />
+        </div>
+        <div className="px-2.5 pb-2 text-[8px] uppercase tracking-wider text-slate">
+          Their site
+        </div>
+      </div>
+
+      <ArrowRight className="h-4 w-4 shrink-0 text-slate" />
+
+      {/* After — your design */}
+      <div className="relative flex-1 overflow-hidden rounded-md ring-1 ring-ink/10">
+        <span className="animate-sweep pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+        <div className="flex gap-1 bg-ink/[0.04] px-2 py-1.5">
+          <span className="h-1 w-1 rounded-full bg-ink/20" />
+          <span className="h-1 w-1 rounded-full bg-ink/15" />
+          <span className="h-1 w-1 rounded-full bg-ink/10" />
+        </div>
+        <div className="space-y-1.5 bg-white p-2.5">
+          <span className="bg-iridescent block h-4 w-full rounded-sm" />
+          <span className="block h-1.5 w-3/4 rounded-sm bg-ink/15" />
+          <span className="block h-1.5 w-1/2 rounded-sm bg-ink/10" />
+        </div>
+        <div className="px-2.5 pb-2 text-[8px] uppercase tracking-wider text-slate">
+          Your design
+        </div>
+      </div>
+    </div>
   );
 }
 
-const GAP_ROWS = [
-  { pain: "Best medication reminder for dementia patients", volume: "41k/mo", hot: false },
-  { pain: "One-button video calls for grandparents", volume: "18k/mo", hot: true },
-  { pain: "GPS tracker for seniors who wander", volume: "33k/mo", hot: false },
+const DISCOVERY_ROWS = [
+  { name: "Bright Smile Dental", site: "0 / 100", hot: true },
+  { name: "Cedar Family Dentistry", site: "41 / 100", hot: false },
+  { name: "Downtown Ortho Studio", site: "36 / 100", hot: false },
 ];
 
 export default function Features() {
@@ -99,24 +114,24 @@ export default function Features() {
     <section className="bg-white px-5 py-20 sm:py-28">
       <SectionHeading
         eyebrow="The platform"
-        title="Built like an analyst. Runs like software."
-        sub="Four systems working your market around the clock."
+        title="Finds the work. Designs the pitch."
+        sub="Four systems that turn a city into a client pipeline."
       />
 
       <div
         ref={gridRef}
         className="reveal-group mx-auto mt-12 grid max-w-5xl gap-4 sm:mt-16 md:grid-cols-3"
       >
-        {/* Idea scoring — dark anchor tile */}
+        {/* Site audits — dark anchor tile */}
         <div className="rise bg-grid-dots rounded-2xl bg-carbon p-6 ring-1 ring-white/10 sm:p-7 md:col-span-2">
           <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
             <div className="max-w-[260px]">
               <h3 className="text-lg font-medium tracking-tight text-white">
-                Idea scoring
+                Site audits
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-white/55">
-                Every idea gets a 0 to 100 score built from demand, competition,
-                and effort. Ranking beats guessing.
+                Every prospect's current site is graded on speed, mobile and SSL.
+                The lower the score, the bigger your opening.
               </p>
             </div>
             <div className="flex items-center gap-6" aria-hidden="true">
@@ -141,16 +156,17 @@ export default function Features() {
           </div>
         </div>
 
-        {/* Daily digest */}
+        {/* Outreach dock */}
         <div
           className="rise rounded-2xl bg-cloud p-6 ring-1 ring-ink/5 sm:p-7"
           style={{ transitionDelay: "100ms" }}
         >
           <h3 className="text-lg font-medium tracking-tight text-ink">
-            Daily digest
+            Outreach dock
           </h3>
           <p className="mt-2 text-sm leading-relaxed text-slate">
-            A fresh hand of scored ideas dealt every morning.
+            Every prospect comes with a drafted email. You review it and send from
+            your own inbox — Everdeck never sends for you.
           </p>
           <div
             aria-hidden="true"
@@ -159,15 +175,15 @@ export default function Features() {
             <div className="flex items-center gap-2">
               <Logo gradient className="h-4 w-4" />
               <span className="text-[12px] font-medium text-ink">
-                Your morning hand is ready
+                Draft ready to review
               </span>
             </div>
             <div className="mt-1.5 flex items-center justify-between">
               <span className="text-[11px] text-slate">
-                3 new ideas · senior health
+                Bright Smile Dental · no site
               </span>
-              <span className="rounded bg-cloud px-1.5 py-0.5 text-[10px] tabular-nums text-slate">
-                6:04 AM
+              <span className="rounded bg-cloud px-1.5 py-0.5 text-[10px] font-medium text-slate">
+                Draft
               </span>
             </div>
           </div>
@@ -177,45 +193,48 @@ export default function Features() {
           />
         </div>
 
-        {/* Niche maps */}
+        {/* Before/after mockups */}
         <div
           className="rise rounded-2xl bg-cloud p-6 ring-1 ring-ink/5 sm:p-7"
           style={{ transitionDelay: "160ms" }}
         >
           <h3 className="text-lg font-medium tracking-tight text-ink">
-            Niche maps
+            Before/after mockups
           </h3>
           <p className="mt-2 text-sm leading-relaxed text-slate">
-            Markets broken into branches you can walk, down to the corner worth
-            owning.
+            See their tired site beside the one Everdeck designed — the exact thing
+            you show up with.
           </p>
-          <div className="mt-4 rounded-xl bg-white ring-1 ring-ink/10 shadow-sm">
-            <NicheMapVisual />
+          <div
+            aria-hidden="true"
+            className="mt-4 overflow-hidden rounded-xl bg-white ring-1 ring-ink/10 shadow-sm"
+          >
+            <BeforeAfterVisual />
           </div>
         </div>
 
-        {/* Gap detection */}
+        {/* Real business discovery */}
         <div
           className="rise rounded-2xl bg-cloud p-6 ring-1 ring-ink/5 sm:p-7 md:col-span-2"
           style={{ transitionDelay: "220ms" }}
         >
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium tracking-tight text-ink">
-              Gap detection
+              Real business discovery
             </h3>
             <span className="flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-1 text-[11px] font-medium text-white">
-              <Bell className="h-3 w-3" />
-              412 open gaps
+              <MapPin className="h-3 w-3" />
+              48 found today
             </span>
           </div>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-slate">
-            Unanswered questions pulled from real searches, forums and reviews,
-            matched to who's not serving them.
+            Real local businesses pulled from maps and local search — each flagged
+            by how weak, or missing, their website is.
           </p>
           <div aria-hidden="true" className="mt-5 space-y-2">
-            {GAP_ROWS.map((row) => (
+            {DISCOVERY_ROWS.map((row) => (
               <div
-                key={row.pain}
+                key={row.name}
                 className={`flex items-center justify-between gap-3 rounded-lg px-3.5 py-2.5 text-[12px] ${
                   row.hot
                     ? "bg-lilac/10 ring-1 ring-lilac"
@@ -223,17 +242,17 @@ export default function Features() {
                 }`}
               >
                 <span className="min-w-0 flex-1 truncate text-ink/80">
-                  {row.pain}
+                  {row.name}
                 </span>
                 <span className="shrink-0 tabular-nums text-[11px] text-slate">
-                  {row.volume}
+                  {row.site}
                 </span>
                 <span
                   className={`shrink-0 text-[11px] ${
                     row.hot ? "font-medium text-ink" : "text-slate"
                   }`}
                 >
-                  {row.hot ? "New gap" : "Scored"}
+                  {row.hot ? "No site" : "Audited"}
                 </span>
               </div>
             ))}

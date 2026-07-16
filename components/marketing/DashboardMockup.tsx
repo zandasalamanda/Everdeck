@@ -76,7 +76,7 @@ export default function DashboardMockup() {
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-1.5 bg-carbon-deep rounded-md px-6 py-1 text-[10px] text-white/60">
             <Lock className="w-2.5 h-2.5 text-white/40" />
-            everdeck.ai/markets/senior-health
+            everdeck.ai/prospects
           </div>
         </div>
         <div className="flex items-center gap-2.5">
@@ -98,15 +98,15 @@ export default function DashboardMockup() {
           </div>
 
           <div className="mt-4 px-2 text-[8px] tracking-wider text-white/30">
-            MARKETS
+            SEARCHES
           </div>
           <div className="mt-1.5 flex items-center gap-1.5 rounded-md bg-white/[0.06] px-2 py-1.5">
             <span className="animate-pulse-dot w-1.5 h-1.5 shrink-0 rounded-full bg-white/90" />
-            <span className="text-[10px] text-white/85">Senior Health</span>
+            <span className="text-[10px] text-white/85">Dentists · Austin</span>
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 px-2 py-1.5">
             <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-white/20" />
-            <span className="text-[10px] text-white/50">Home Coffee</span>
+            <span className="text-[10px] text-white/50">Plumbers · Denver</span>
           </div>
 
           <nav className="mt-4 space-y-0.5">
@@ -126,10 +126,10 @@ export default function DashboardMockup() {
           <div className="mt-5 rounded-lg bg-white/[0.04] ring-1 ring-white/10 px-2.5 py-2">
             <div className="flex items-center gap-1 text-[9px] font-medium">
               <Sparkles className="w-2.5 h-2.5 text-white/70" />
-              <span className="text-iridescent">Fresh hand dealt</span>
+              <span className="text-iridescent">Mockups ready</span>
             </div>
             <div className="mt-0.5 text-[8px] leading-relaxed text-white/45">
-              3 new ideas scored this morning
+              12 sites designed this morning
             </div>
           </div>
         </aside>
@@ -140,19 +140,19 @@ export default function DashboardMockup() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-white">
-                  Senior Health
+                  Dentists · Austin, TX
                 </span>
                 <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[8px] font-medium text-white/75">
-                  SCAN COMPLETE
+                  HUNT COMPLETE
                 </span>
               </div>
               <div className="mt-0.5 text-[10px] text-white/45">
-                Daily scan finished 6:04 AM — 12 niches, 412 open gaps
+                Hunt finished 6:04 AM — 48 businesses, 17 with no site
               </div>
             </div>
             <div className="bg-iridescent flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[10px] font-medium text-ink">
               <Sparkles className="w-3 h-3" />
-              Generate ideas
+              Build mockups
             </div>
           </div>
 
@@ -190,24 +190,24 @@ export default function DashboardMockup() {
           </div>
 
           <div className="mt-3 grid grid-cols-5 gap-3">
-            {/* Top ideas */}
+            {/* Top prospects */}
             <div className="col-span-2 rounded-xl bg-white/[0.03] ring-1 ring-white/5">
               <div className="border-b border-white/5 px-3.5 py-2 text-[10px] text-white/70">
-                Today's hand
+                Top prospects
               </div>
               <div className="divide-y divide-white/5">
-                {TOP_IDEAS.map((idea) => (
-                  <div key={idea.title} className="px-3.5 py-2.5">
+                {TOP_PROSPECTS.map((prospect) => (
+                  <div key={prospect.title} className="px-3.5 py-2.5">
                     <div className="flex items-start justify-between gap-2">
                       <span className="text-[10px] leading-snug text-white/80">
-                        {idea.title}
+                        {prospect.title}
                       </span>
-                      <ScorePill score={idea.score} />
+                      <ScorePill score={prospect.score} />
                     </div>
                     <div className="mt-1.5 h-[3px] w-full overflow-hidden rounded-full bg-white/[0.06]">
                       <div
                         className="bg-iridescent h-full rounded-full"
-                        style={{ width: `${idea.demand}%` }}
+                        style={{ width: `${prospect.opportunity}%` }}
                       />
                     </div>
                   </div>
@@ -215,39 +215,40 @@ export default function DashboardMockup() {
               </div>
             </div>
 
-            {/* Gap feed with scanning sweep */}
+            {/* Prospect feed with scanning sweep */}
             <div className="col-span-3 relative overflow-hidden rounded-xl bg-white/[0.03] ring-1 ring-white/5">
               <div className="animate-sweep pointer-events-none absolute inset-y-0 left-0 w-1/5 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
               <div className="flex items-center justify-between border-b border-white/5 px-3.5 py-2">
-                <span className="text-[10px] text-white/70">Gap feed</span>
+                <span className="text-[10px] text-white/70">Prospect feed</span>
                 <span className="text-[9px] text-white/35">
-                  Live from search & forums
+                  Live from local search
                 </span>
               </div>
               <div className="divide-y divide-white/5">
-                {GAP_FEED.map((gap) => (
+                {PROSPECT_FEED.map((prospect) => (
                   <div
-                    key={gap.pain}
+                    key={prospect.name}
                     className="flex items-center gap-3 px-3.5 py-[7px]"
                   >
                     <span className="min-w-0 flex-1 truncate text-[10px] text-white/70">
-                      {gap.pain}
+                      {prospect.name}
                     </span>
                     <span className="shrink-0 text-[9px] tabular-nums text-white/40">
-                      {gap.volume}
+                      {prospect.site}
                     </span>
-                    {gap.live ? (
-                      <span className="relative shrink-0 w-[52px] text-right text-[9px]">
+                    {prospect.live ? (
+                      <span className="relative shrink-0 w-[74px] text-right text-[9px]">
                         <span className="animate-status-swap text-white/45 motion-reduce:opacity-0">
-                          Scoring…
+                          Designing…
                         </span>
                         <span className="animate-status-swap absolute inset-y-0 right-0 text-white/85 [animation-delay:-4s]">
-                          Scored 79
+                          Mockup ready
                         </span>
                       </span>
                     ) : (
-                      <span className="shrink-0 w-[52px] text-right text-[9px] text-white/85">
-                        Scored
+                      <span className="flex shrink-0 w-[74px] items-center justify-end gap-1 text-right text-[9px] text-white/85">
+                        <span className="h-1.5 w-1.5 rounded-full bg-mint" />
+                        Mockup ready
                       </span>
                     )}
                   </div>
@@ -255,10 +256,10 @@ export default function DashboardMockup() {
               </div>
               <div className="flex items-center justify-between border-t border-white/5 px-3.5 py-1.5">
                 <span className="text-[8px] text-white/30">
-                  Next scan in 14h 22m
+                  Next hunt in 14h 22m
                 </span>
                 <span className="text-[8px] text-white/30">
-                  408 more gaps →
+                  36 more prospects →
                 </span>
               </div>
             </div>

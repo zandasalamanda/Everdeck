@@ -34,12 +34,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <ClerkProvider
           appearance={{
-            baseTheme: dark,
+            theme: dark,
             variables: {
               colorPrimary: "#C9BBFF",
               colorBackground: "#141417",
-              colorText: "#F5F5F6",
-              colorTextSecondary: "#9a9aa2",
               borderRadius: "0.9rem",
               fontFamily: "'Nimbus Sans TW01', 'Helvetica Neue', Helvetica, Arial, sans-serif",
             },
