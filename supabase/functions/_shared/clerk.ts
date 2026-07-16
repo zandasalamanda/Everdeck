@@ -8,13 +8,13 @@
 
 import { createRemoteJWKSet, decodeJwt, jwtVerify } from "npm:jose@5";
 
+// Everdeck's dedicated Clerk instance (registered as the Supabase third-party
+// auth provider). A CLERK_ISSUER env var overrides this; at go-live add the
+// production Frontend API domain here (e.g. https://clerk.everdeck.ai).
 const ENV_ISSUER = Deno.env.get("CLERK_ISSUER");
 const ALLOWED_ISSUERS = ENV_ISSUER
   ? [ENV_ISSUER]
-  : [
-      "https://alert-oarfish-38.clerk.accounts.dev",
-      "https://relevant-bat-62.clerk.accounts.dev",
-    ];
+  : ["https://alert-oarfish-38.clerk.accounts.dev"];
 
 const jwksByIssuer = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
