@@ -14,7 +14,12 @@ import { createRemoteJWKSet, decodeJwt, jwtVerify } from "npm:jose@5";
 const ENV_ISSUER = Deno.env.get("CLERK_ISSUER");
 const ALLOWED_ISSUERS = ENV_ISSUER
   ? [ENV_ISSUER]
-  : ["https://alert-oarfish-38.clerk.accounts.dev"];
+  : [
+      // Dev instance (local development) + the production instance
+      // (clerk.everdeck.app, live once its DNS is verified).
+      "https://alert-oarfish-38.clerk.accounts.dev",
+      "https://clerk.everdeck.app",
+    ];
 
 const jwksByIssuer = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
