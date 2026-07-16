@@ -6,6 +6,7 @@ export type RunMode = "autonomous" | "directed";
 export type ProspectStatus =
   | "new"
   | "audited"
+  | "pursuing"
   | "ready"
   | "in_dock"
   | "sent"
@@ -30,6 +31,7 @@ export const TIER_GLYPHS: Record<Tier, string> = {
 export const STATUS_LABELS: Record<ProspectStatus, string> = {
   new: "New",
   audited: "Audited",
+  pursuing: "Building",
   ready: "Mockup ready",
   in_dock: "In outreach dock",
   sent: "Sent",
@@ -100,7 +102,14 @@ export interface Mockup {
   prospect_id: string;
   html: string;
   summary: string | null;
+  brief: string | null;
   created_at: string;
+}
+
+/** Monthly pursue budget: how many "give the order" calls used vs allowed. */
+export interface PursueUsage {
+  used: number;
+  allowed: number;
 }
 
 export interface Outreach {

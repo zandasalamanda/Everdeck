@@ -3,9 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ExternalLink, Globe, Sparkles } from "lucide-react";
 
 import { GroundingBadge, StatusBadge, TierBadge } from "@/components/app/badges";
+import BuildBrief from "@/components/app/BuildBrief";
 import MockupPreview from "@/components/app/MockupPreview";
 import OutreachEditor, { OpenMockupButton } from "@/components/app/OutreachEditor";
 import ProspectStatusBar from "@/components/app/ProspectStatusBar";
+import PursueButton from "@/components/app/PursueButton";
 import { getProspectDetail, getWorkspace } from "@/lib/data";
 import type { Tier } from "@/lib/types";
 
@@ -53,6 +55,7 @@ export default async function ProspectPage({ params }: { params: Promise<{ id: s
     .map((s) => s.trim())
     .filter(Boolean);
   const hasScreenshot = Boolean(prospect.website_url && prospect.current_site_screenshot_url);
+  const isBuilding = prospect.status === "pursuing";
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -168,10 +171,10 @@ export default async function ProspectPage({ params }: { params: Promise<{ id: s
           )}
         </div>
 
-        {/* RIGHT — your mockup */}
+        {/* RIGHT — your concept (or the pursue call to action) */}
         <div className="flex flex-col rounded-2xl bg-carbon-panel p-5 ring-1 ring-white/10">
           <div className="flex items-center justify-between">
-            <h2 className="text-[13px] font-medium uppercase tracking-wider text-white/45">Your mockup</h2>
+            <h2 className="text-[13px] font-medium uppercase tracking-wider text-white/45">Your concept</h2>
             {mockup && <OpenMockupButton html={mockup.html} />}
           </div>
 
@@ -184,31 +187,55 @@ export default async function ProspectPage({ params }: { params: Promise<{ id: s
                 )}
               </>
             ) : (
-              <div className="flex h-[520px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-carbon-deep/60 text-center">
-                <Sparkles className="h-6 w-6 animate-pulse text-lilac/70" />
-                <p className="mt-3 text-[14px] font-medium text-white/70">Mockup is generating…</p>
-                <p className="mt-1 max-w-xs text-[12px] leading-relaxed text-white/40">
-                  We're drafting a fresh homepage for this business. Check back in a moment.
+              <div className="flex h-[520px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-carbon-deep/60 p-8 text-center">
+                <div className="relative flex h-14 w-14 items-center justify-center">
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute h-14 w-14 rounded-full bg-lilac/25 blur-xl"
+                  />
+                  <Sparkles
+                    className={`relative h-7 w-7 text-lilac ${isBuilding ? "animate-pulse" : ""}`}
+                  />
+                </div>
+                <h3 className="mt-4 text-[15px] font-medium text-white">
+                  {isBuilding ? "Building your concept + brief…" : "Pursue this lead"}
+                </h3>
+                <p className="mt-1.5 max-w-xs text-[13px] leading-relaxed text-white/50">
+                  {isBuilding
+                    ? "Your team is generating a website concept, a build brief, and a drafted email. This can take a moment."
+                    : "Generate a website concept, a build brief, and a drafted email — one pursue."}
                 </p>
+                <div className="mt-5">
+                  <PursueButton prospectId={prospect.id} status={prospect.status} variant="cta" />
+                </div>
               </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* Outreach */}
-      <section className="mt-5 rounded-2xl bg-carbon-panel p-5 ring-1 ring-white/10 sm:p-6">
-        <h2 className="text-[13px] font-medium uppercase tracking-wider text-white/45">Outreach</h2>
-        <div className="mt-4">
-          <OutreachEditor
-            prospectId={prospect.id}
-            toEmail={outreach?.to_email}
-            subject={outreach?.subject}
-            body={outreach?.body}
-            status={outreach?.status}
-          />
+      {/* Build brief — the spec to hand to an AI coding tool */}
+      {mockup?.brief && (
+        <div className="mt-5">
+          <BuildBrief brief={mockup.brief} />
         </div>
-      </section>
+      )}
+
+      {/* Outreach — only once the concept + draft exist */}
+      {mockup && (
+        <section className="mt-5 rounded-2xl bg-carbon-panel p-5 ring-1 ring-white/10 sm:p-6">
+          <h2 className="text-[13px] font-medium uppercase tracking-wider text-white/45">Outreach</h2>
+          <div className="mt-4">
+            <OutreachEditor
+              prospectId={prospect.id}
+              toEmail={outreach?.to_email}
+              subject={outreach?.subject}
+              body={outreach?.body}
+              status={outreach?.status}
+            />
+          </div>
+        </section>
+      )}
     </div>
   );
 }

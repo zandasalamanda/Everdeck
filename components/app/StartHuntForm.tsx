@@ -13,6 +13,26 @@ import type { RunMode } from "@/lib/types";
 const DRAIN_TICKS = 8;
 const TICK_INTERVAL_MS = 2500;
 
+/** Remembers the last city the user hunted, so they don't retype it. */
+const LAST_LOCATION_KEY = "everdeck:lastLocation";
+
+/** High no-website-rate niches with real project budgets — one tap fills the type. */
+const NICHE_PRESETS = [
+  "Roofers",
+  "Plumbers",
+  "Landscapers",
+  "HVAC",
+  "Electricians",
+  "Auto repair",
+  "House cleaners",
+  "Movers",
+  "Fencing",
+  "Painters",
+  "Dentists",
+  "Med spas",
+  "Law firms",
+] as const;
+
 /** Map a raw RPC / gate error onto a calm, human sentence. */
 function toMessage(raw: string, plan: string): string {
   if (raw.includes("plan_gate:daily_runs")) {
@@ -55,6 +75,16 @@ export default function StartHuntForm({
     };
   }, []);
 
+  // Prefill the location with the last city hunted (placeholder stays "Austin, TX").
+  useEffect(() => {
+    try {
+      const last = window.localStorage.getItem(LAST_LOCATION_KEY);
+      if (last) setLocation(last);
+    } catch {
+      // localStorage can be unavailable (private mode) — just skip the prefill.
+    }
+  }, []);
+
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -69,6 +99,13 @@ export default function StartHuntForm({
       // Mirror the RPC's own inputs_required gate before we spend a run.
       setError(toMessage("inputs_required", plan));
       return;
+    }
+
+    // Remember this city for next time.
+    try {
+      window.localStorage.setItem(LAST_LOCATION_KEY, loc);
+    } catch {
+      // Non-fatal — the hunt proceeds even if we can't persist the location.
     }
 
     setBusy(true);
@@ -115,6 +152,34 @@ export default function StartHuntForm({
   return (
     <div className="rounded-2xl bg-carbon-panel p-5 ring-1 ring-white/10">
       <form onSubmit={handleSubmit} noValidate>
+        {/* Niche presets — high no-website niches, one tap fills the type */}
+        <div className="mb-4">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-white/40">
+            Popular niches
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {NICHE_PRESETS.map((niche) => {
+              const active = businessType.trim().toLowerCase() === niche.toLowerCase();
+              return (
+                <button
+                  key={niche}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setBusinessType(niche)}
+                  aria-pressed={active}
+                  className={`rounded-full px-3 py-1 text-[12px] font-medium ring-1 transition disabled:opacity-60 ${
+                    active
+                      ? "bg-white/10 text-white ring-white/25"
+                      : "bg-white/[0.04] text-white/55 ring-white/10 hover:text-white/85"
+                  }`}
+                >
+                  {niche}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label
@@ -227,8 +292,9 @@ export default function StartHuntForm({
       )}
 
       <p className="mt-3 text-[12px] leading-relaxed text-white/45">
-        Everdeck finds real businesses, screenshots their current site, scores the
-        opportunity, and drafts a mockup + outreach for each.
+        A hunt finds every matching business, screenshots their current site, and
+        scores the opportunity — no AI yet. You review the deck and pursue the ones
+        worth building, one lead at a time.
       </p>
     </div>
   );

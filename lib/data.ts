@@ -12,6 +12,7 @@ import type {
   Outreach,
   Plan,
   Prospect,
+  PursueUsage,
   Run,
   Subscription,
 } from "@/lib/types";
@@ -81,6 +82,7 @@ export async function getTodaysProspects(accountId: string): Promise<Prospect[]>
     .from("v_todays_prospects")
     .select("*")
     .eq("account_id", accountId)
+    .order("opportunity_score", { ascending: false })
     .limit(60);
   return (data ?? []) as Prospect[];
 }
@@ -217,4 +219,20 @@ export async function getUsage(accountId: string): Promise<UsageSummary[]> {
     byProvider.set(row.provider, cur);
   }
   return [...byProvider.values()];
+}
+
+/** This month's pursue budget — how many "give the order" calls are left. */
+export async function getPursueUsage(): Promise<PursueUsage | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("pursue_usage");
+  if (error) return null;
+
+  // The RPC returns a table(used int, allowed int) — a single-row set.
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | { used: number; allowed: number }
+    | null
+    | undefined;
+  if (!row) return null;
+
+  return { used: Number(row.used ?? 0), allowed: Number(row.allowed ?? 0) };
 }

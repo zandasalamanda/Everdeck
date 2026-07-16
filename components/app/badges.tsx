@@ -41,6 +41,7 @@ export function GroundingBadge({ grounding }: { grounding: Grounding }) {
 const STATUS_STYLE: Record<ProspectStatus, string> = {
   new: "bg-white/10 text-white/50",
   audited: "bg-white/10 text-white/60",
+  pursuing: "bg-lilac/15 text-lilac",
   ready: "bg-lilac/15 text-lilac",
   in_dock: "bg-sky/15 text-sky",
   sent: "bg-blush/15 text-blush",
