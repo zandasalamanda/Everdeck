@@ -331,8 +331,10 @@ html {
 }
 
 /* ---------- App shell: living grass-glass rail ---------- */
+/* No `position` here — the rail elements already set `fixed` via Tailwind,
+   which both positions them and contains the absolute grass image. Setting
+   position:relative here would override that `fixed` and unstick the bar. */
 .app-rail {
-  position: relative;
   overflow: hidden;
 }
 .app-rail-grass {
