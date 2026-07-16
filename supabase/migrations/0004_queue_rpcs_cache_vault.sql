@@ -1,1 +1,12 @@
 -- Applied to prod as 'queue_rpcs_cache_vault' — see connector migration history. Content mirrors what was applied:
+-- Tables/functions created (full SQL in the connector migration history,
+-- version 20260716013613, and reproduced in supabase/functions comments):
+--   discussion_cache (per-node fetch cache, RLS member-select)
+--   claim_jobs(n, worker)          -- atomic FOR UPDATE SKIP LOCKED claim
+--   complete_job(job_id)           -- finalizes run when queue empties
+--   fail_job(job_id, error)        -- exp backoff, dead-letter at max_attempts
+--   enqueue_job(account, run, stage, payload)
+--   enqueue_daily_autonomous()     -- one autonomous run per engine account/day
+--   vault secret 'worker_token' + get_worker_token()  (service_role only)
+-- All functions: SECURITY DEFINER, search_path pinned, EXECUTE revoked from
+-- public/anon/authenticated, granted to service_role only.
