@@ -18,16 +18,18 @@ data to real businesses + real mockups, see **SETUP.md** (two keys, two switches
 - **Old Supabase `demo@everdeck.app` login no longer works** (Clerk replaced it). Its 100-idea demo deck still exists in the DB, orphaned — tell me your Clerk user id after you sign in and I'll reassign that deck to you.
 - **Stripe test card** (once TEST keys are wired; sandbox billing needs no card): `4242 4242 4242 4242`.
 
-## What works right now (exact steps)
+## What works right now (verified end-to-end on production)
 
-1. **Marketing site** — the existing hero/landing, now the `/` route of the product app.
-2. **Auth & multi-tenancy** — Sign up (email/password or magic link) at `/login`; a trigger provisions your profile + workspace + free subscription. Every table is RLS-scoped to account membership; verified from outside (see Tests).
-3. **Five-stage idea engine** — `/app/runs` → "Start run" (directed, e.g. "senior health", or autonomous on paid plans). Stages run as durable jobs: market tree → discussion fetch (synthetic, labeled) → pain-point extraction with verbatim quotes → five-framework gap generation with 0–100 scores → ranked top-3. The form drains the queue live; a cron tick also drains every 2 minutes.
-4. **Color-coded mind map** — `/app/map`: the market hierarchy with opportunity tiers (mint ▲ high / lilac ◆ med / gray ○ low — glyphs are the non-color cue), always-visible legend, leaf drill-in.
-5. **Idea drill-in** — click any idea: explanation, features, value prop, business model, differentiator, the niche's pain points with customer quotes, top-3 assessment, star/save, and **Generate landing-page prompt** (plan-gated) → copy-pasteable Before-After-Bridge build prompt.
-6. **Today's deck** — `/app` shows the freshest scored ideas (the daily autonomous run refills it at 06:00 UTC for engine-enabled plans).
-7. **Billing & gating** — `/app/billing`: Free/Pro($49)/Founder($199) placeholder prices. Sandbox mode (Stripe keys absent) simulates checkout/downgrade end-to-end writing real subscription rows. Gating is enforced **server-side in SQL RPCs** (`plan_gate:engine`, `plan_gate:daily_runs`, `plan_gate:landing_prompts`) — verified by test: free plan blocked, pro unlocked.
-8. **Usage metering** — `/app/usage`: requests/tokens per provider (mock = $0).
+1. **Sign up with Google or email** → your workspace auto-provisions. Grass+sky auth screen (Clerk dark theme).
+2. **Run a hunt** — `/app/hunts` → business type + city (e.g. "coffee shops" / "Portland, OR") → **Start hunt**. The pipeline discovers businesses, audits each site, scores the opportunity (no website = ~95), and generates a personalized mockup + outreach draft. Verified live: a hunt produced 5 scored prospects with mockups.
+3. **Prospect deck** — `/app`: cards sorted by opportunity, tier chips (▲ hot lead / ◆ worth a look / ○ long shot with glyphs), "No website" flags, current-site thumbnails. Grass-glass nav rail.
+4. **Prospect detail** — `/app/prospect/[id]`: the **before/after** — their current site next to your generated one-page mockup (rendered live in a sandboxed iframe) — plus the site issues, opportunity score, a status pipeline (New → Mockup ready → In dock → Sent → Replied → Won), and the outreach editor.
+5. **Outreach dock** — `/app/dock`: every AI-drafted email, grouped by status. Review/edit the recipient, subject, and body; **Open in email** hands it to your own mail app; **Mark as sent**. Everdeck never sends automatically.
+6. **Billing & gating** — `/app/billing`: Free/Pro($49)/Founder($199) placeholders. Gating enforced server-side in SQL (`plan_gate:daily_runs`, `plan_gate:engine`) — a hunt = a daily run; free = 1/day, 5 prospects.
+7. **Usage metering** — `/app/usage`: provider calls (places / audit / mockup); mock = $0.
+8. **Daily autonomous hunts + queue drain** — pg_cron ticks the worker every 2 min and can enqueue a daily autonomous hunt.
+
+> **To make it real, see [SETUP.md](SETUP.md):** a Google Places key + a Gemini key + two env switches turn mock businesses/mockups into real ones. Screenshots (thum.io) and public-email extraction already work with no key.
 
 ## What's stubbed / synthetic (and why)
 
