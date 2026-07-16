@@ -1,0 +1,5 @@
+-- Applied to prod as `ensure_workspace_race_safe`. Two concurrent first-visit
+-- calls (app layout + page both call getWorkspace→ensure_workspace) raced to
+-- insert the same clerk_user_id; one threw a unique violation. Now the profile
+-- insert is ON CONFLICT DO NOTHING and the account is provisioned only by the
+-- call that actually created the profile.

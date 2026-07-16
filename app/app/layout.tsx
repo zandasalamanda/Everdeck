@@ -2,22 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { UserButton } from "@clerk/nextjs";
-import { LayoutGrid, Mailbox, Radar, Gauge, CreditCard } from "lucide-react";
 
 import Logo from "@/components/marketing/Logo";
-import NavChip from "@/components/app/NavChip";
+import { AppNavDesktop, AppNavMobile } from "@/components/app/AppNav";
 import { getWorkspace } from "@/lib/data";
 
 const GRASS_URL =
   "https://res.cloudinary.com/dy5er7kv5/image/upload/q_auto/f_auto/v1781191264/grass_eam204.png";
-
-const NAV = [
-  { href: "/app", label: "Prospects", icon: LayoutGrid, exact: true },
-  { href: "/app/dock", label: "Outreach dock", icon: Mailbox },
-  { href: "/app/hunts", label: "Hunts", icon: Radar },
-  { href: "/app/usage", label: "Usage", icon: Gauge },
-  { href: "/app/billing", label: "Plan", icon: CreditCard },
-];
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const ws = await getWorkspace();
@@ -33,11 +24,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <span className="font-medium tracking-tight">Everdeck</span>
         </Link>
 
-        <nav className="relative z-10 mt-8 space-y-1">
-          {NAV.map((n) => (
-            <NavChip key={n.href} href={n.href} label={n.label} icon={n.icon} exact={n.exact} />
-          ))}
-        </nav>
+        <AppNavDesktop />
 
         <div className="relative z-10 mt-auto space-y-3">
           <div className="rounded-xl bg-white/[0.05] px-3 py-2.5 ring-1 ring-white/10 backdrop-blur-sm">
@@ -67,11 +54,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <span className="text-sm font-medium tracking-tight">Everdeck</span>
         </Link>
         <div className="relative z-10 flex items-center gap-4">
-          {NAV.map(({ href, icon: Icon, label }) => (
-            <Link key={href} href={href} aria-label={label} className="text-white/60 hover:text-white">
-              <Icon className="h-[18px] w-[18px]" />
-            </Link>
-          ))}
+          <AppNavMobile />
           <UserButton />
         </div>
       </div>
