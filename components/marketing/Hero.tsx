@@ -288,7 +288,7 @@ export default function Hero() {
         src={GRASS_URL}
         alt=""
         draggable={false}
-        className="pointer-events-none absolute bottom-0 left-0 z-10 w-full select-none"
+        className="pointer-events-none absolute bottom-0 left-0 z-10 h-44 w-full select-none object-cover object-bottom sm:h-60 lg:h-72"
       />
     </section>
   );
