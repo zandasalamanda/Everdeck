@@ -1,0 +1,13 @@
+-- Applied to prod as `clerk_identity`, `toggle_star_rpc`. Migrates tenancy
+-- identity from Supabase Auth (auth.uid uuid) to Clerk (auth.jwt sub text),
+-- non-breaking. Full DDL in the connector migration history. Key objects:
+--   profiles.clerk_user_id (unique)                 -- Clerk sub -> profile
+--   dropped hard FKs to auth.users (Clerk users aren't in auth.users)
+--   private.app_uid()      -- current principal: Clerk sub OR legacy uuid
+--   private.is_account_member() rewired to app_uid()
+--   RLS on profiles/accounts/idea_signals -> app_uid()
+--   ensure_workspace()     -- idempotent provision for a Clerk user (SECURITY
+--                             DEFINER; identity from verified JWT, not args)
+--   sync_profile(email,name)
+--   toggle_star(idea_id)   -- star without exposing internal uid to client
+-- All new functions: search_path pinned, EXECUTE limited to authenticated.
