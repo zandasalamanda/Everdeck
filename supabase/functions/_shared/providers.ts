@@ -6,6 +6,7 @@
 // (Google Places) and the LLM (Gemini); screenshots (thum.io) and public
 // email extraction work with no key at all.
 
+import { env } from "./config.ts";
 import { mockBusinesses } from "./mock.ts";
 
 export interface Business {
@@ -25,9 +26,9 @@ export interface SiteAudit {
   issues: string[];
 }
 
-const GOOGLE_KEY = () => Deno.env.get("GOOGLE_MAPS_API_KEY");
-const PLACES_PROVIDER = () => Deno.env.get("PLACES_PROVIDER") ?? "mock";
-const AUDIT_PROVIDER = () => Deno.env.get("AUDIT_PROVIDER") ?? "mock";
+const GOOGLE_KEY = () => env("GOOGLE_MAPS_API_KEY");
+const PLACES_PROVIDER = () => env("PLACES_PROVIDER") ?? "mock";
+const AUDIT_PROVIDER = () => env("AUDIT_PROVIDER") ?? "mock";
 
 // ---------- 1. Business discovery ----------
 
@@ -67,13 +68,44 @@ export async function discoverBusinesses(
 
 // ---------- 2. Site audit (fetch + optional PageSpeed) ----------
 
-function extractEmail(html: string): string | null {
-  const mailto = html.match(/mailto:([^"'?\s>]+@[^"'?\s>]+)/i);
-  if (mailto) return mailto[1].toLowerCase();
-  const plain = html.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
-  // Skip obvious asset/no-reply noise.
-  if (plain && !/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(plain[0])) return plain[0].toLowerCase();
-  return null;
+function registrableHost(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+/** Is this a plausible human contact, not a tracking DSN / vendor telemetry? */
+function isPlausibleContact(email: string): boolean {
+  const at = email.indexOf("@");
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  if (!local || !domain) return false;
+  if (/\.(png|jpe?g|gif|svg|webp|ico)$/i.test(email)) return false;
+  // Sentry DSNs / API keys appear as a long hex string before the @.
+  if (/^[0-9a-f]{16,}$/i.test(local) || local.length > 40) return false;
+  // Vendor telemetry / placeholder domains that are never a real inbox.
+  if (/(^|\.)(sentry\.io|wixpress\.com|example\.(com|org|net))$/i.test(domain)) return false;
+  return true;
+}
+
+/** Best public contact email on the page, preferring the business's own domain. */
+function extractEmail(html: string, website: string | null): string | null {
+  const found = new Set<string>();
+  for (const m of html.matchAll(/mailto:([^"'?\s>]+@[^"'?\s>]+)/gi)) found.add(m[1].toLowerCase());
+  for (const m of html.matchAll(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi)) found.add(m[0].toLowerCase());
+
+  const candidates = [...found].filter(isPlausibleContact);
+  if (candidates.length === 0) return null;
+
+  const host = registrableHost(website);
+  if (host) {
+    const own = candidates.find((e) => e.endsWith("@" + host) || e.endsWith("." + host));
+    if (own) return own;
+  }
+  return candidates[0];
 }
 
 /** thum.io renders a screenshot from a plain URL — no key required. */
@@ -106,7 +138,7 @@ export async function auditSite(website: string | null): Promise<SiteAudit> {
   try {
     const r = await fetch(website, { signal: AbortSignal.timeout(8000), redirect: "follow" });
     const html = await r.text();
-    contact_email = extractEmail(html);
+    contact_email = extractEmail(html, website);
     if (!/viewport/i.test(html)) issues.push("Not mobile-responsive");
     if (!website.startsWith("https")) issues.push("No SSL");
     if (html.length < 1500) issues.push("Very thin content");

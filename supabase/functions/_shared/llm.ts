@@ -5,6 +5,7 @@
 // Edge Function secrets). Swapping providers is a config change, not a code
 // change. Every call is metered into usage_events by the caller.
 
+import { env } from "./config.ts";
 import { mockComplete } from "./mock.ts";
 
 export interface LlmRequest {
@@ -14,6 +15,8 @@ export interface LlmRequest {
   maxOutputTokens: number;
   /** Deterministic seed for the mock provider (e.g. market label). */
   seed: string;
+  /** Optional Gemini responseSchema — forces strictly valid JSON output. */
+  responseSchema?: Record<string, unknown>;
 }
 
 export interface LlmResponse {
@@ -31,9 +34,11 @@ function scrub(s: string): string {
   return s.replace(/key=[\w-]+/gi, "key=REDACTED").replace(/AIza[\w-]{20,}/g, "REDACTED");
 }
 
-/** Naive rate limiter: serialize Gemini calls with a minimum gap. */
+/** Naive rate limiter: serialize Gemini calls with a minimum gap. Note this is
+ * per-isolate only; concurrent isolates aren't coordinated, so 429s are still
+ * possible and are handled by the backoff loop below. */
 let lastGeminiCall = 0;
-const MIN_GAP_MS = 4_100; // ~14 rpm, safely under the 15 rpm free tier
+const MIN_GAP_MS = 6_500; // ~9 rpm, under the current 10 rpm free-tier Flash limit
 
 async function geminiComplete(req: LlmRequest, apiKey: string): Promise<LlmResponse> {
   const wait = lastGeminiCall + MIN_GAP_MS - Date.now();
@@ -43,7 +48,7 @@ async function geminiComplete(req: LlmRequest, apiKey: string): Promise<LlmRespo
   // Model is env-configurable; the default is a rolling alias so the app
   // doesn't break when Google retires a dated model (e.g. gemini-2.0-flash
   // shut down 2026-06-01). Set GEMINI_MODEL to pin a specific version.
-  const model = Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-latest";
+  const model = env("GEMINI_MODEL") ?? "gemini-flash-latest";
 
   const body = {
     system_instruction: { parts: [{ text: req.system }] },
@@ -51,6 +56,9 @@ async function geminiComplete(req: LlmRequest, apiKey: string): Promise<LlmRespo
     generationConfig: {
       maxOutputTokens: req.maxOutputTokens,
       responseMimeType: "application/json",
+      // A schema makes Gemini's decoder emit strictly valid JSON — critical
+      // for long HTML values that otherwise break naive JSON-in-prompt output.
+      ...(req.responseSchema ? { responseSchema: req.responseSchema } : {}),
     },
   };
 
@@ -102,8 +110,8 @@ async function geminiComplete(req: LlmRequest, apiKey: string): Promise<LlmRespo
 }
 
 export async function complete(req: LlmRequest): Promise<LlmResponse> {
-  const provider = Deno.env.get("LLM_PROVIDER") ?? "mock";
-  const apiKey = Deno.env.get("GEMINI_API_KEY");
+  const provider = env("LLM_PROVIDER") ?? "mock";
+  const apiKey = env("GEMINI_API_KEY");
 
   if (provider === "gemini" && apiKey) {
     return geminiComplete(req, apiKey);

@@ -4,6 +4,7 @@
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
+import { env } from "./config.ts";
 import { complete } from "./llm.ts";
 import { auditSite, discoverBusinesses, opportunityScore } from "./providers.ts";
 
@@ -22,9 +23,21 @@ class PermanentStageError extends Error {}
 export { PermanentStageError };
 
 function parseJson<T>(text: string, where: string): T {
+  let t = text.trim();
+  // Models sometimes wrap JSON in ``` fences despite JSON mode.
+  const fence = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fence) t = fence[1].trim();
   try {
-    return JSON.parse(text) as T;
+    return JSON.parse(t) as T;
   } catch {
+    // Last resort: parse the outermost {...} object in the text.
+    const s = t.indexOf("{");
+    const e = t.lastIndexOf("}");
+    if (s >= 0 && e > s) {
+      try {
+        return JSON.parse(t.slice(s, e + 1)) as T;
+      } catch { /* fall through to the hard failure below */ }
+    }
     throw new PermanentStageError(`${where}: unparseable model JSON (${text.length} chars)`);
   }
 }
@@ -72,7 +85,7 @@ export async function runDiscover(db: Db, job: Job): Promise<void> {
     .select("id", { count: "exact", head: true })
     .eq("hunt_id", huntId);
 
-  const grounding = (Deno.env.get("PLACES_PROVIDER") ?? "mock") === "google" ? "live" : "synthetic";
+  const grounding = (env("PLACES_PROVIDER") ?? "mock") === "google" ? "live" : "synthetic";
   let prospectIds: string[] = [];
 
   if ((existing ?? 0) === 0) {
@@ -177,7 +190,20 @@ export async function runGenerate(db: Db, job: Job): Promise<void> {
     system: GENERATE_SYSTEM,
     user: `STAGE: generate\nBUSINESS: ${p.name}\nTYPE: ${hunt?.business_type ?? "local business"}\nLOCATION: ${hunt?.location ?? ""}\nHAS_SITE: ${p.has_website}\nCURRENT_URL: ${p.website_url ?? "none"}`,
     model: "gemini-flash-latest",
-    maxOutputTokens: 8192,
+    // Current Flash models think by default, and thinking tokens are drawn
+    // from this same budget. A full HTML page + summary + opener needs real
+    // headroom or generation stops at MAX_TOKENS before any JSON is emitted.
+    maxOutputTokens: 32768,
+    // Force strictly-valid JSON — long inline HTML otherwise breaks parsing.
+    responseSchema: {
+      type: "object",
+      properties: {
+        html: { type: "string" },
+        summary: { type: "string" },
+        opener: { type: "string" },
+      },
+      required: ["html", "summary", "opener"],
+    },
     seed: p.name,
   });
   await meter(db, job, res.provider, res);

@@ -17,6 +17,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { PermanentStageError, runStage } from "../_shared/stages.ts";
 import { bearer, verifyClerkJwt } from "../_shared/clerk.ts";
+import { setOverride } from "../_shared/config.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -37,6 +38,40 @@ async function workerToken(force = false): Promise<string> {
     cachedToken = data as string;
   }
   return cachedToken;
+}
+
+let providerConfigLoaded = false;
+
+/**
+ * Provider API keys live in Supabase Vault — no Edge Function secret store is
+ * reachable from here (no CLI / Management API / MCP secrets tool). Load them
+ * once per isolate and hand them to the provider seams via config overrides
+ * (Deno.env.set is a no-op in the edge runtime). Presence of a key auto-enables
+ * its live provider; a Vault hiccup degrades to mock rather than crashing
+ * (retried on the next invocation).
+ */
+async function ensureProviderConfig(): Promise<void> {
+  if (providerConfigLoaded) return;
+  try {
+    const { data, error } = await admin.rpc("get_provider_config");
+    if (error) throw new Error(error.message);
+    const cfg = (data ?? {}) as {
+      gemini_api_key?: string | null;
+      google_maps_api_key?: string | null;
+    };
+    if (cfg.gemini_api_key) {
+      setOverride("GEMINI_API_KEY", cfg.gemini_api_key);
+      setOverride("LLM_PROVIDER", "gemini");
+    }
+    if (cfg.google_maps_api_key) {
+      setOverride("GOOGLE_MAPS_API_KEY", cfg.google_maps_api_key);
+      setOverride("PLACES_PROVIDER", "google");
+      setOverride("AUDIT_PROVIDER", "live");
+    }
+    providerConfigLoaded = true;
+  } catch {
+    // Keep whatever env is already set (mock). Try again next invocation.
+  }
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -111,6 +146,8 @@ Deno.serve(async (req: Request) => {
   if (!principal) {
     return new Response("unauthorized", { status: 401 });
   }
+
+  await ensureProviderConfig();
 
   const task = new URL(req.url).searchParams.get("task") ?? "tick";
 
