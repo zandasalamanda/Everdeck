@@ -158,14 +158,6 @@ export default function Hero() {
     };
   }, []);
 
-  const scrollToPricing = () => {
-    document.getElementById("pricing")?.scrollIntoView({
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth",
-    });
-  };
-
   return (
     <section
       ref={sectionRef}
@@ -219,12 +211,20 @@ export default function Hero() {
           className="animate-fade-up [animation-delay:320ms] mt-5 sm:mt-6 w-full max-w-xl"
           onSubmit={(event) => {
             event.preventDefault();
-            scrollToPricing();
+            const market = new FormData(event.currentTarget)
+              .get("market")
+              ?.toString()
+              .trim();
+            // Start the product with their market in hand — not a sales page.
+            window.location.href = market
+              ? `/sign-up?market=${encodeURIComponent(market)}`
+              : "/sign-up";
           }}
         >
           <div className="flex items-center gap-3 rounded-full bg-white/60 backdrop-blur-md ring-1 ring-ink/10 pl-5 pr-1.5 py-1.5 transition-shadow focus-within:shadow-lift">
             <input
               type="text"
+              name="market"
               placeholder={
                 typed ? `Try “${typed}”` : "What market should we explore?"
               }
