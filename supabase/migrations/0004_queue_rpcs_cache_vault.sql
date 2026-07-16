@@ -1,0 +1,1 @@
+-- Applied to prod as 'queue_rpcs_cache_vault' — see connector migration history. Content mirrors what was applied:
