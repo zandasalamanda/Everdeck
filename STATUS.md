@@ -54,7 +54,29 @@ See `DECISIONS.md` (11 recorded calls) and `QUESTIONS.md`. The three I most want
 2. **Reddit path** — official API (my recommendation) vs Google CSE; either needs credentials.
 3. **Git remote** — history is local-only on `feat/product-build`; want it pushed to GitHub?
 
+## Security review
+
+A 28-agent adversarial review (four lenses — RLS/tenancy, billing/webhook, worker/queue, app-auth — each finding double-verified) ran before handoff. It confirmed 12 real issues; **all are fixed and redeployed**:
+
+- **Worker `task=daily` was callable by any signed-in user** (could trigger autonomous runs + LLM spend on other tenants). Now gated to the cron principal only (403 otherwise).
+- **Gemini key was in the request URL** and could leak into the client-readable `jobs.last_error`. Moved to a header; errors are scrubbed; truncated responses fail cleanly.
+- **Billing `checkout` could create a second concurrent subscription** (double-billing on upgrade). Now changes the existing subscription's price in place with proration; downgrade routes to the Stripe Portal.
+- **Webhook replay/out-of-order** could resurrect a cancelled plan. Added an `updated_at`-based guard, clear the subscription id on cancel, and read period/subscription fields defensively across Stripe API versions.
+- **Unguarded `JSON.parse` of model output** would crash-loop on truncation. All parses guarded; deterministic failures dead-letter immediately; dropped enqueues now surface instead of silently orphaning a run.
+- **Landing-prompt generation consumed the daily run quota**. It now reuses the idea's originating run and is capped at 10/day.
+- **`claim_jobs` had no stale-lock reclaim** (a job orphaned by a killed isolate stuck forever). Now reclaims `running` jobs older than 10 minutes.
+- **Open redirect** via `?next=` on the login page and auth callback. Both now accept same-origin relative paths only.
+
+Two flagged items were refuted by the verifiers (not bugs). Full detail is in the review transcript; the fixes are commit `7ae1895`.
+
 ## Go-live checklist (deliberately NOT executed)
+
+0. **Reset sandbox-granted plans** so nobody keeps a paid plan for free after Stripe goes live:
+   ```sql
+   update public.subscriptions set plan='free', source='sandbox', current_period_end=null, updated_at=now()
+   where source='sandbox' and plan <> 'free';
+   ```
+   (This will also reset the demo account — re-grant it afterward if you want it on founder.)
 
 1. **Stripe → live test first**: create test products/prices (`Pro`, `Founder`) in the Stripe dashboard; set `STRIPE_SECRET_KEY`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_FOUNDER`, `APP_URL` as Edge Function secrets; add a webhook endpoint `https://fxrnuoahfzzdsepwvzux.supabase.co/functions/v1/stripe-webhook` (events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`) and set `STRIPE_WEBHOOK_SECRET`. Sandbox mode switches off automatically the moment `STRIPE_SECRET_KEY` exists. Test with `4242…` card end-to-end, then repeat with LIVE keys + live products when you're ready to charge.
 2. **Gemini → real**: set `LLM_PROVIDER=gemini` + `GEMINI_API_KEY` (Edge Function secrets). ⚠️ Free-tier Gemini content may be used by Google to improve products — move to a paid key (no-training) before selling publicly.
